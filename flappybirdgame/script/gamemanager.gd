@@ -8,7 +8,7 @@ extends Node
 @export_group("Scene Nodes")
 @export var camera: Camera2D
 @export var player: Area2D
-@export var player_sprite: Sprite2D
+@export var player_sprite: AnimatedSprite2D
 @export var player_collision: CollisionShape2D
 @export var background_container: Node2D
 @export var bg_sprite_1: Sprite2D
@@ -60,9 +60,11 @@ var pipe_spawn_x: float
 # -------------------- SCROLL & VISUAL SETTINGS --------------------
 @export_group("Scroll Settings")
 @export var background_scroll_speed: float = 50.0
+@export var ground_height_offset: float = 120.0 
+# -----------------------------------------------------------------
 
 @export_group("Visual Settings")
-@export var player_idle_bob_speed: float = 200.0 # Time scale for bobbing
+@export var player_idle_bob_speed: float = 200.0
 @export var player_idle_bob_amount: float = 10.0
 @export var score_pop_scale: float = 1.3
 @export var score_pop_duration: float = 0.1
@@ -92,37 +94,46 @@ var http_request: HTTPRequest
 
 # -------------------- INITIALIZATION --------------------
 func _ready():
-	viewport_size = get_viewport().get_visible_rect().size
-	player_start_position = Vector2(viewport_size.x * player_start_x_ratio, viewport_size.y * player_start_y_ratio)
-	pipe_spawn_x = viewport_size.x + 50.0
-	
 	if not validate_nodes():
 		push_error("GameManager: Missing required node references!")
 		return
 	
 	apply_textures()
-	setup_positions()
 	setup_ui_properties()
 	connect_signals()
+	
+	setup_game_dimensions()
+	
 	reset_game()
 	
-		# Create and setup HTTPRequest node
 	http_request = HTTPRequest.new()
 	add_child(http_request)
 	http_request.request_completed.connect(_on_request_completed)
 
+# -------------------- CORE FIX: RESPONSIVE SETUP --------------------
+func setup_game_dimensions():
+	# 1. Update Viewport Size
+	# Use the actual viewport size, as this is the basis for all rendering.
+	viewport_size = get_viewport().get_visible_rect().size
+	
+	# 2. Update all size-dependent variables
+	player_start_position = Vector2(viewport_size.x * player_start_x_ratio, viewport_size.y * player_start_y_ratio)
+	pipe_spawn_x = viewport_size.x + 50.0
+	
+	# 3. Apply position/scale updates
+	setup_positions()
+	
+	if not is_game_started:
+		player.position = player_start_position
+	
 func _notification(what):
 	if what == NOTIFICATION_WM_SIZE_CHANGED:
-		var new_viewport_size = get_viewport().get_visible_rect().size
-		if new_viewport_size != viewport_size:
-			viewport_size = new_viewport_size
-			player_start_position = Vector2(viewport_size.x * player_start_x_ratio, viewport_size.y * player_start_y_ratio)
-			pipe_spawn_x = viewport_size.x + 50.0
-			setup_positions()
+		setup_game_dimensions()
 
 func validate_nodes() -> bool:
 	var valid = true
 	
+	if not camera: valid = false; push_error("Camera2D node not assigned!")
 	if not player: valid = false; push_error("Player node not assigned!")
 	if not player_sprite: valid = false; push_error("PlayerSprite node not assigned!")
 	if not pipe_container: valid = false; push_error("PipeContainer node not assigned!")
@@ -131,8 +142,9 @@ func validate_nodes() -> bool:
 	return valid
 
 func apply_textures():
-	if bird_texture and player_sprite:
-		player_sprite.texture = bird_texture
+	#if bird_texture and player_sprite:
+	#	player_sprite.texture = bird_texture
+	player_sprite.play('default')
 	
 	if background_texture:
 		if bg_sprite_1:
@@ -144,24 +156,25 @@ func apply_textures():
 
 func setup_positions():
 	if camera:
-		camera.position = viewport_size / 2
+		# Keep camera centered on the viewport's center coordinate
+		camera.position = viewport_size / 2 
 	
 	if background_texture and bg_sprite_1 and bg_sprite_2:
 		var bg_target_height = viewport_size.y
 		var texture_height = background_texture.get_height()
-		var scale_factor = bg_target_height / texture_height
 		
-		bg_sprite_1.scale = Vector2(scale_factor, scale_factor)
-		bg_sprite_2.scale = Vector2(scale_factor, scale_factor)
-		bg_sprite_1.position = Vector2.ZERO
-		var scaled_bg_width = bg_sprite_1.get_rect().size.x
-		bg_sprite_2.position = Vector2(scaled_bg_width, 0)
-		
-		if background_container:
-			background_container.position = Vector2.ZERO
-
-	if player:
-		player.position = player_start_position
+		if texture_height > 0:
+			var scale_factor = bg_target_height / texture_height
+			
+			bg_sprite_1.scale = Vector2(scale_factor, scale_factor)
+			bg_sprite_2.scale = Vector2(scale_factor, scale_factor)
+			bg_sprite_1.position = Vector2.ZERO
+			
+			var scaled_bg_width = bg_sprite_1.get_rect().size.x
+			bg_sprite_2.position = Vector2(scaled_bg_width, 0)
+			
+			if background_container:
+				background_container.position = Vector2.ZERO
 
 func setup_ui_properties():
 	if score_label:
@@ -222,6 +235,9 @@ func _process(delta: float):
 # -------------------- SCROLLING --------------------
 func scroll_background(delta: float):
 	var sprites = [bg_sprite_1, bg_sprite_2]
+	
+	if sprites[0] == null: return
+	
 	var scaled_bg_width = sprites[0].get_rect().size.x
 	var scroll_amount = background_scroll_speed * delta
 	
@@ -233,69 +249,130 @@ func scroll_background(delta: float):
 	for sprite in sprites:
 		if sprite.position.x <= -scaled_bg_width:
 			sprite.position.x = max_x + scaled_bg_width
-			max_x = sprite.position.x
 
 # -------------------- PIPE MANAGEMENT --------------------
 func spawn_pipe():
 	if not pipe_container or not pipe_scene:
 		return
 	
-	var game_area_height = viewport_size.y
-	var min_pipe_height = game_area_height * min_pipe_height_ratio
-	var max_pipe_height = game_area_height * max_pipe_height_ratio
-	var gap_center_y = randf_range(min_pipe_height, max_pipe_height)
-
-	var top_pipe = create_pipe(true, gap_center_y)
-	var bottom_pipe = create_pipe(false, gap_center_y)
-	pipes.append(top_pipe)
-	pipes.append(bottom_pipe)
+	# Use 0 for absolute screen top
+	var world_top = 0.0 
 	
-	# Score Area setup remains correct, centered on the gap
+	# Defines the bottom edge just above the visible ground layer
+	var world_bottom = viewport_size.y - ground_height_offset
+	
+	var game_area_height = world_bottom - world_top
+	
+	# Calculate safe pipe range using world coordinates
+	var safe_min = world_top + (game_area_height * min_pipe_height_ratio)
+	var safe_max = world_top + (game_area_height * max_pipe_height_ratio)
+	
+	var gap_center_y = randf_range(safe_min, safe_max)
+
+	var half_gap = pipe_gap / 2.0
+	
+	# Calculate the required height in world units
+	# Top pipe needs to reach from gap edge down to the world top (Y=0)
+	var top_pipe_height_needed = gap_center_y - half_gap - world_top
+	# Bottom pipe needs to reach from gap edge up to the world bottom
+	var bottom_pipe_height_needed = world_bottom - (gap_center_y + half_gap)
+	
+	var top_pipe = create_pipe(true, gap_center_y, top_pipe_height_needed)
+	var bottom_pipe = create_pipe(false, gap_center_y, bottom_pipe_height_needed)
+	
+	if top_pipe:
+		pipes.append(top_pipe)
+	if bottom_pipe:
+		pipes.append(bottom_pipe)
+	
+	# Score Area setup centered on the gap
 	var score_area = Area2D.new()
-	score_area.position = Vector2(pipe_spawn_x - pipe_width / 2.0, gap_center_y)
+	score_area.position = Vector2(pipe_spawn_x, gap_center_y)
 	score_area.name = "ScoreArea"
 	
 	var score_collision = CollisionShape2D.new()
 	var score_shape = RectangleShape2D.new()
 	score_shape.size = Vector2(10, pipe_gap)
 	score_collision.shape = score_shape
-	score_collision.position = Vector2(pipe_width / 2.0, 0)
 	score_area.add_child(score_collision)
 	
 	score_area.area_entered.connect(_on_score_area_entered.bind(score_area))
 	pipe_container.add_child(score_area)
 	pipes.append(score_area)
 
-func create_pipe(is_top: bool, gap_center_y: float) -> Node2D:
+func create_pipe(is_top: bool, gap_center_y: float, pipe_height_needed: float) -> Node2D:
 	if not pipe_scene:
 		push_error("pipe_scene is not assigned!")
 		return null
 	
 	var pipe_instance = pipe_scene.instantiate() as Node2D
+	if not pipe_instance:
+		push_error("Failed to instantiate pipe scene!")
+		return null
+		
 	pipe_container.add_child(pipe_instance)
+	pipe_instance.name = "Pipe"
 	
-	# FIX: Rename the pipe instance so it can be distinguished from "ScoreArea"
-	pipe_instance.name = "Pipe" 
+	# 1. Get the components
+	var pipe_sprite = pipe_instance.get_node_or_null("Sprite2D")
+	var pipe_collision = pipe_instance.get_node_or_null("CollisionShape2D")
 	
+	# 2. Determine original dimensions 
+	var original_pipe_height = 300.0 # Assumed texture height
+	var original_pipe_width = 100.0    # Assumed texture width
+	if pipe_sprite and pipe_sprite.texture:
+		original_pipe_height = pipe_sprite.texture.get_height()
+		original_pipe_width = pipe_sprite.texture.get_width()
+	
+	if original_pipe_height == 0.0 or original_pipe_width == 0.0:
+		push_error("Pipe texture dimensions are zero, cannot scale pipe!")
+		return null
+	
+	var half_gap = pipe_gap / 2.0
 	var pipe_position: Vector2
-	# Visual offset to ensure the pipe art doesn't overlap the gap
-	var OFFSET_Y: float = 20.0 
-
+	
+	# 3. Calculate Scale Factors
+	var scale_factor_y = pipe_height_needed / original_pipe_height
+	var scale_factor_x = pipe_width / original_pipe_width
+	
 	if is_top:
-		pipe_position = Vector2(pipe_spawn_x, (gap_center_y - pipe_gap / 2.0) - OFFSET_Y)
-		pipe_instance.scale = Vector2(1, -1)
+		# Top pipe: position is the bottom of the pipe (top edge of gap)
+		pipe_position = Vector2(pipe_spawn_x, gap_center_y - half_gap)
+		
+		# Set Scale: X scale is fixed, Y scale is stretched and flipped (negative)
+		pipe_instance.scale = Vector2(scale_factor_x, -scale_factor_y) 
 	else:
-		pipe_position = Vector2(pipe_spawn_x, (gap_center_y + pipe_gap / 2.0) + OFFSET_Y)
-		pipe_instance.scale = Vector2(1, 1)
+		# Bottom pipe: position is the top of the pipe (bottom edge of gap)
+		pipe_position = Vector2(pipe_spawn_x, gap_center_y + half_gap + half_gap)
+		
+		# Set Scale: X scale is fixed, Y scale is stretched (positive)
+		pipe_instance.scale = Vector2(scale_factor_x, scale_factor_y)
 
 	pipe_instance.position = pipe_position
+	
+	# 4. Resize and Reposition Collision Shape
+	if pipe_collision and pipe_collision.shape is RectangleShape2D:
+		var shape = pipe_collision.shape as RectangleShape2D
+		
+		# Collision box size uses the target pipe_width and calculated height
+		shape.size = Vector2(pipe_width, pipe_height_needed)
+		
+		# Center the collision shape vertically relative to the pipe instance's origin (the gap edge)
+		if is_top:
+			# For top pipe (negatively scaled), move collision shape UP (negative Y)
+			pipe_collision.position = Vector2(0, -pipe_height_needed / 2.0)
+		else:
+			# For bottom pipe, move collision shape DOWN (positive Y)
+			pipe_collision.position = Vector2(0, pipe_height_needed / 2.0)
+			
 	return pipe_instance
+
 
 func update_pipes(delta: float):
 	for i in range(pipes.size() - 1, -1, -1):
 		var pipe = pipes[i]
 		pipe.position.x -= pipe_speed * delta
-		if pipe.position.x < -pipe_width - 100:
+		if pipe.position.x < -pipe_width - 100: 
 			pipe.queue_free()
 			pipes.remove_at(i)
 
@@ -305,9 +382,7 @@ func _on_player_collision(body: Node2D):
 		game_over()
 
 func _on_player_area_collision(area: Area2D):
-	# FIX: Only trigger game over if the area is named "Pipe". 
-	# This prevents old/lingering "ScoreArea" objects from triggering a loss.
-	if area.name == "Pipe" and not is_game_over:
+	if area.get_parent() != null and area.get_parent().name == "Pipe" and not is_game_over:
 		game_over()
 
 func _on_score_area_entered(area: Area2D, score_area: Area2D):
@@ -323,10 +398,9 @@ func _on_score_area_entered(area: Area2D, score_area: Area2D):
 		var idx = pipes.find(score_area)
 		if idx != -1:
 			pipes.remove_at(idx)
-			
-		# FIX: Ensure the score area is completely non-functional before being freed
+		
 		score_area.monitoring = false
-		score_area.set_process_mode(Node.PROCESS_MODE_DISABLED) 
+		score_area.set_process_mode(Node.PROCESS_MODE_DISABLED)
 		score_area.queue_free()
 
 # -------------------- GAME FLOW --------------------
@@ -361,7 +435,7 @@ func reset_game():
 	player_velocity = Vector2.ZERO
 	pipe_spawn_timer = 0.0
 	
-	player.position = player_start_position
+	player.position = player_start_position 
 	player.rotation = 0
 	
 	score_label.text = "0"
@@ -371,27 +445,22 @@ func reset_game():
 	game_over_panel.visible = false
 	
 func pushToFirebase():
-	# Prepare the request
-	var url = "http://localhost:3000/api/users"  # Update with your actual URL
+	var url = "http://localhost:3000/api/users"
 	
-	# Request body data matching your endpoint
 	var body_data = {
 		"username": "player123",
 		"company": "My Company",
 		"email": "player@example.com",
-		"points": score  # Optional, defaults to 0 if not provided
+		"points": score
 	}
 	
-	# Convert to JSON string
 	var json_body = JSON.stringify(body_data)
 	
-	# Headers for JSON content
 	var headers = [
 		"Content-Type: application/json",
 		"Accept: application/json"
 	]
 	
-	# Make the POST request
 	var error = http_request.request(
 		url,
 		headers,
