@@ -49,25 +49,34 @@ var player_start_position: Vector2
 @export var max_rotation_up: float = -0.6
 
 @export_group("Pipe Settings")
-@export var pipe_gap: float = 220.0
+@export var pipe_gap_base: float = 220.0
 @export var pipe_width: float = 80.0
-@export var pipe_speed: float = 180.0
-@export var pipe_spawn_interval: float = 2.2
+@export var pipe_speed_base: float = 200.0
+@export var pipe_spawn_interval_base: float = 2.0
 var pipe_spawn_x: float
 @export var min_pipe_height_ratio: float = 0.25
 @export var max_pipe_height_ratio: float = 0.75
 
+@export_group("Difficulty Settings")
+@export var difficulty_increase_rate: float = 0.08  # Exponential growth rate per second
+@export var speed_multiplier_max: float = 3.5
+@export var spawn_interval_min: float = 0.8
+@export var gap_size_min: float = 130.0
+
 # -------------------- SCROLL & VISUAL SETTINGS --------------------
 @export_group("Scroll Settings")
-@export var background_scroll_speed: float = 50.0
+@export var background_scroll_speed_base: float = 50.0
 @export var ground_height_offset: float = 120.0 
-# -----------------------------------------------------------------
 
 @export_group("Visual Settings")
 @export var player_idle_bob_speed: float = 200.0
 @export var player_idle_bob_amount: float = 10.0
 @export var score_pop_scale: float = 1.3
 @export var score_pop_duration: float = 0.1
+
+# -------------------- UI SETTINGS --------------------
+@export_group("UI Settings")
+@export var use_cool_ui: bool = true
 
 # -------------------- COLORS --------------------
 @export_group("UI Colors")
@@ -82,6 +91,13 @@ var is_game_over: bool = false
 var score: int = 0
 var high_score: int = 0
 var elapsed_time: float = 0.0
+var game_time: float = 0.0  # Time since game started
+
+# -------------------- DYNAMIC DIFFICULTY --------------------
+var current_pipe_speed: float
+var current_spawn_interval: float
+var current_pipe_gap: float
+var current_background_scroll_speed: float
 
 # -------------------- PIPES --------------------
 var pipes: Array = []
@@ -89,6 +105,9 @@ var pipe_spawn_timer: float = 0.0
 
 # -------------------- VIEWPORT --------------------
 var viewport_size: Vector2
+
+# -------------------- COOL UI --------------------
+var ui_manager: UIManager
 
 var http_request: HTTPRequest
 
@@ -99,16 +118,35 @@ func _ready():
 		return
 	
 	apply_textures()
-	setup_ui_properties()
 	connect_signals()
-	
 	setup_game_dimensions()
+	
+	# Setup cool UI
+	if use_cool_ui:
+		setup_cool_ui()
+	else:
+		setup_ui_properties()
 	
 	reset_game()
 	
 	http_request = HTTPRequest.new()
 	add_child(http_request)
 	http_request.request_completed.connect(_on_request_completed)
+
+func setup_cool_ui():
+	ui_manager = UIManager.new()
+	ui_manager.name = "UIManager"
+	add_child(ui_manager)
+	ui_manager.game_manager = self
+	
+	# Connect restart button
+	var restart_btn = ui_manager.get_restart_button()
+	if restart_btn:
+		restart_btn.pressed.connect(restart_game)
+	
+	# Hide old UI
+	if ui_layer:
+		ui_layer.hide()
 
 # -------------------- CORE FIX: RESPONSIVE SETUP --------------------
 func setup_game_dimensions():
@@ -142,8 +180,6 @@ func validate_nodes() -> bool:
 	return valid
 
 func apply_textures():
-	#if bird_texture and player_sprite:
-	#	player_sprite.texture = bird_texture
 	player_sprite.play('default')
 	
 	if background_texture:
@@ -188,8 +224,25 @@ func connect_signals():
 	if player:
 		player.body_entered.connect(_on_player_collision)
 		player.area_entered.connect(_on_player_area_collision)
-	if restart_button:
+	if restart_button and not use_cool_ui:
 		restart_button.pressed.connect(restart_game)
+
+# -------------------- DIFFICULTY CALCULATION --------------------
+func update_difficulty():
+	# Exponential growth: value = base * e^(rate * time)
+	var difficulty_multiplier = exp(difficulty_increase_rate * game_time)
+	
+	# Pipe speed increases exponentially
+	current_pipe_speed = min(pipe_speed_base * difficulty_multiplier, pipe_speed_base * speed_multiplier_max)
+	
+	# Spawn interval decreases exponentially (faster spawning)
+	current_spawn_interval = max(pipe_spawn_interval_base / difficulty_multiplier, spawn_interval_min)
+	
+	# Gap size decreases exponentially (harder to pass through)
+	current_pipe_gap = max(pipe_gap_base / difficulty_multiplier, gap_size_min)
+	
+	# Background scroll speed matches pipe speed
+	current_background_scroll_speed = background_scroll_speed_base * (current_pipe_speed / pipe_speed_base)
 
 # -------------------- INPUT HANDLING --------------------
 func _input(event):
@@ -216,13 +269,17 @@ func _process(delta: float):
 		player.position.y = player_start_position.y + sin(elapsed_time * player_idle_bob_speed / 1000.0) * player_idle_bob_amount
 		return
 	
+	# Update game time and difficulty
+	game_time += delta
+	update_difficulty()
+	
 	player_velocity.y += gravity * delta
 	player_velocity.y = min(player_velocity.y, max_fall_speed)
 	player.position += player_velocity * delta
 	player.rotation = lerp(player.rotation, clamp(player_velocity.y / 400.0, max_rotation_up, max_rotation_down), delta * rotation_speed)
 	
 	pipe_spawn_timer += delta
-	if pipe_spawn_timer >= pipe_spawn_interval:
+	if pipe_spawn_timer >= current_spawn_interval:
 		spawn_pipe()
 		pipe_spawn_timer = 0.0
 	
@@ -239,7 +296,7 @@ func scroll_background(delta: float):
 	if sprites[0] == null: return
 	
 	var scaled_bg_width = sprites[0].get_rect().size.x
-	var scroll_amount = background_scroll_speed * delta
+	var scroll_amount = current_background_scroll_speed * delta
 	
 	for sprite in sprites:
 		sprite.position.x -= scroll_amount
@@ -269,7 +326,7 @@ func spawn_pipe():
 	
 	var gap_center_y = randf_range(safe_min, safe_max)
 
-	var half_gap = pipe_gap / 2.0
+	var half_gap = current_pipe_gap / 2.0
 	
 	# Calculate the required height in world units
 	# Top pipe needs to reach from gap edge down to the world top (Y=0)
@@ -292,7 +349,7 @@ func spawn_pipe():
 	
 	var score_collision = CollisionShape2D.new()
 	var score_shape = RectangleShape2D.new()
-	score_shape.size = Vector2(10, pipe_gap)
+	score_shape.size = Vector2(10, current_pipe_gap)
 	score_collision.shape = score_shape
 	score_area.add_child(score_collision)
 	
@@ -328,7 +385,7 @@ func create_pipe(is_top: bool, gap_center_y: float, pipe_height_needed: float) -
 		push_error("Pipe texture dimensions are zero, cannot scale pipe!")
 		return null
 	
-	var half_gap = pipe_gap / 2.0
+	var half_gap = current_pipe_gap / 2.0
 	var pipe_position: Vector2
 	
 	# 3. Calculate Scale Factors
@@ -371,7 +428,7 @@ func create_pipe(is_top: bool, gap_center_y: float, pipe_height_needed: float) -
 func update_pipes(delta: float):
 	for i in range(pipes.size() - 1, -1, -1):
 		var pipe = pipes[i]
-		pipe.position.x -= pipe_speed * delta
+		pipe.position.x -= current_pipe_speed * delta
 		if pipe.position.x < -pipe_width - 100: 
 			pipe.queue_free()
 			pipes.remove_at(i)
@@ -388,7 +445,10 @@ func _on_player_area_collision(area: Area2D):
 func _on_score_area_entered(area: Area2D, score_area: Area2D):
 	if area == player:
 		score += 1
-		if score_label:
+		
+		if use_cool_ui and ui_manager:
+			ui_manager.update_score(score, player.position)
+		elif score_label:
 			score_label.text = str(score)
 			if score_pop_duration > 0:
 				var tween = create_tween()
@@ -406,20 +466,35 @@ func _on_score_area_entered(area: Area2D, score_area: Area2D):
 # -------------------- GAME FLOW --------------------
 func start_game():
 	is_game_started = true
-	start_label.visible = false
-	tap_hint.visible = false
 	player_velocity = Vector2.ZERO
+	game_time = 0.0
+	update_difficulty()
+	
+	if use_cool_ui and ui_manager:
+		ui_manager.hide_start_screen()
+	else:
+		start_label.visible = false
+		tap_hint.visible = false
 
 func game_over():
 	is_game_over = true
-	game_over_panel.visible = true
-	pushToFirebase()
-	if score > high_score:
+	
+	var is_new_record = score > high_score
+	if is_new_record:
 		high_score = score
-		high_score_label.text = "Best: " + str(high_score)
-		final_score_label.text = "NEW BEST SCORE!\nScore: " + str(score)
+	
+	pushToFirebase()
+	
+	if use_cool_ui and ui_manager:
+		ui_manager.show_game_over(score, high_score, player.position, is_new_record)
+		ui_manager.update_high_score(high_score)
 	else:
-		final_score_label.text = "Score: " + str(score) + "\nBest: " + str(high_score)
+		game_over_panel.visible = true
+		if is_new_record:
+			high_score_label.text = "Best: " + str(high_score)
+			final_score_label.text = "BEST SCORE!\n " + str(score)
+		else:
+			final_score_label.text = "Score: " + str(score) + "\nBest: " + str(high_score)
 
 func restart_game():
 	for pipe in pipes:
@@ -432,17 +507,29 @@ func reset_game():
 	is_game_over = false
 	score = 0
 	elapsed_time = 0.0
+	game_time = 0.0
 	player_velocity = Vector2.ZERO
 	pipe_spawn_timer = 0.0
+	
+	# Reset difficulty to base values
+	current_pipe_speed = pipe_speed_base
+	current_spawn_interval = pipe_spawn_interval_base
+	current_pipe_gap = pipe_gap_base
+	current_background_scroll_speed = background_scroll_speed_base
 	
 	player.position = player_start_position 
 	player.rotation = 0
 	
-	score_label.text = "0"
-	score_label.scale = Vector2(1, 1)
-	start_label.visible = true
-	tap_hint.visible = true
-	game_over_panel.visible = false
+	if use_cool_ui and ui_manager:
+		ui_manager.show_start_screen()
+		ui_manager.update_score(0, player.position)
+		ui_manager.update_high_score(high_score)
+	else:
+		score_label.text = "0"
+		score_label.scale = Vector2(1, 1)
+		start_label.visible = true
+		tap_hint.visible = true
+		game_over_panel.visible = false
 	
 func pushToFirebase():
 	var url = "http://localhost:3000/api/users"

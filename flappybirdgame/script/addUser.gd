@@ -9,7 +9,7 @@ func _ready():
 	http_request.request_completed.connect(_on_request_completed)
 	
 	# Connect button press signal
-	pressed.connect(_on_button_pressed)
+	#pressed.connect(_on_button_pressed)
 
 func _on_button_pressed():
 	# Prepare the request

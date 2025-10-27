@@ -1,9 +1,10 @@
-[gd_scene load_steps=44 format=3 uid="uid://bxl56x6s2bx7i"]
+[gd_scene load_steps=45 format=3 uid="uid://bxl56x6s2bx7i"]
 
 [ext_resource type="Script" uid="uid://u1j0f17l2qns" path="res://script/gamemanager.gd" id="1_cb5m5"]
 [ext_resource type="Texture2D" uid="uid://ckyye6csm0ksq" path="res://assets/background.jpg" id="1_oqtid"]
 [ext_resource type="Texture2D" uid="uid://d221ffvqlbakq" path="res://assets/maskot.png" id="4_2n0tp"]
 [ext_resource type="PackedScene" uid="uid://1cjd8qwd4n8t" path="res://objects/ror.tscn" id="4_j0dff"]
+[ext_resource type="Script" uid="uid://cnqxnxhs33oc1" path="res://script/UIManager.gd" id="5_2n0tp"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_oqtid"]
 
@@ -295,6 +296,10 @@ bird_texture = ExtResource("4_2n0tp")
 background_texture = ExtResource("1_oqtid")
 pipe_scene = ExtResource("4_j0dff")
 jump_force = -500.0
+difficulty_increase_rate = 0.09
+speed_multiplier_max = 2.0
+spawn_interval_min = 2.5
+gap_size_min = 190.0
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
@@ -334,11 +339,12 @@ shape = SubResource("RectangleShape2D_cb5m5")
 position = Vector2(-99, 21.75)
 scale = Vector2(1.38942, 1.45847)
 sprite_frames = SubResource("SpriteFrames_x1tax")
-frame_progress = 0.569235
+frame_progress = 0.502761
 
 [node name="PipeContainer" type="Node2D" parent="."]
 
 [node name="UI" type="CanvasLayer" parent="."]
+script = ExtResource("5_2n0tp")
 
 [node name="ScoreLabel" type="Label" parent="UI"]
 offset_right = 40.0
