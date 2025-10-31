@@ -342,7 +342,7 @@ func update_score(new_score: int, player_pos: Vector2):
 	spawn_score_particles(player_pos)
 	
 	# Small screen shake
-	add_screen_shake(3)
+	#add_screen_shake(3)
 
 func update_high_score(new_high_score: int):
 	high_score_label.text = "Best: " + str(new_high_score)
@@ -352,7 +352,7 @@ func show_game_over(final_score: int, best_score: int, player_pos: Vector2, is_n
 	spawn_death_particles(player_pos)
 	
 	# Big screen shake
-	add_screen_shake(15)
+	#add_screen_shake(15)
 	
 	# Show game over screen with delay
 	await get_tree().create_timer(0.5).timeout

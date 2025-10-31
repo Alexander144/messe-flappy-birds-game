@@ -1,7 +1,7 @@
 extends Node
 
 # ============================================
-# FLAPPY BIRD - FULL INSPECTOR SETUP
+# FLAPPY BIRD - FIXED RESTART LAG
 # ============================================
 
 # -------------------- NODE REFERENCES --------------------
@@ -58,7 +58,7 @@ var pipe_spawn_x: float
 @export var max_pipe_height_ratio: float = 0.75
 
 @export_group("Difficulty Settings")
-@export var difficulty_increase_rate: float = 0.08  # Exponential growth rate per second
+@export var difficulty_increase_rate: float = 0.08
 @export var speed_multiplier_max: float = 3.5
 @export var spawn_interval_min: float = 0.8
 @export var gap_size_min: float = 130.0
@@ -84,6 +84,10 @@ var pipe_spawn_x: float
 @export var high_score_color: Color = Color.YELLOW
 @export var game_over_color: Color = Color.RED
 
+# -------------------- DEBUG --------------------
+@export_group("Debug")
+@export var show_debug_info: bool = false
+
 # -------------------- GAME STATE --------------------
 var player_velocity: Vector2 = Vector2.ZERO
 var is_game_started: bool = false
@@ -91,7 +95,7 @@ var is_game_over: bool = false
 var score: int = 0
 var high_score: int = 0
 var elapsed_time: float = 0.0
-var game_time: float = 0.0  # Time since game started
+var game_time: float = 0.0
 
 # -------------------- DYNAMIC DIFFICULTY --------------------
 var current_pipe_speed: float
@@ -99,8 +103,9 @@ var current_spawn_interval: float
 var current_pipe_gap: float
 var current_background_scroll_speed: float
 
-# -------------------- PIPES --------------------
-var pipes: Array = []
+# -------------------- PIPES - SEPARATED --------------------
+var pipe_pairs: Array = []
+var active_pipes_count: int = 0
 var pipe_spawn_timer: float = 0.0
 
 # -------------------- VIEWPORT --------------------
@@ -111,17 +116,26 @@ var ui_manager: UIManager
 
 var http_request: HTTPRequest
 
+# -------------------- OPTIMIZATION VARIABLES --------------------
+var scaled_bg_width: float = 0.0
+var last_score: int = -1
+var difficulty_update_timer: float = 0.0
+const DIFFICULTY_UPDATE_INTERVAL: float = 0.5
+var cached_half_rotation_speed: float
+var deletion_x_threshold: float
+
 # -------------------- INITIALIZATION --------------------
 func _ready():
 	if not validate_nodes():
 		push_error("GameManager: Missing required node references!")
 		return
 	
+	cached_half_rotation_speed = rotation_speed * 0.5
+	
 	apply_textures()
 	connect_signals()
 	setup_game_dimensions()
 	
-	# Setup cool UI
 	if use_cool_ui:
 		setup_cool_ui()
 	else:
@@ -139,26 +153,21 @@ func setup_cool_ui():
 	add_child(ui_manager)
 	ui_manager.game_manager = self
 	
-	# Connect restart button
 	var restart_btn = ui_manager.get_restart_button()
 	if restart_btn:
 		restart_btn.pressed.connect(restart_game)
 	
-	# Hide old UI
 	if ui_layer:
 		ui_layer.hide()
 
-# -------------------- CORE FIX: RESPONSIVE SETUP --------------------
 func setup_game_dimensions():
-	# 1. Update Viewport Size
-	# Use the actual viewport size, as this is the basis for all rendering.
 	viewport_size = get_viewport().get_visible_rect().size
 	
-	# 2. Update all size-dependent variables
 	player_start_position = Vector2(viewport_size.x * player_start_x_ratio, viewport_size.y * player_start_y_ratio)
 	pipe_spawn_x = viewport_size.x + 50.0
 	
-	# 3. Apply position/scale updates
+	deletion_x_threshold = -200.0
+	
 	setup_positions()
 	
 	if not is_game_started:
@@ -192,7 +201,6 @@ func apply_textures():
 
 func setup_positions():
 	if camera:
-		# Keep camera centered on the viewport's center coordinate
 		camera.position = viewport_size / 2 
 	
 	if background_texture and bg_sprite_1 and bg_sprite_2:
@@ -206,7 +214,7 @@ func setup_positions():
 			bg_sprite_2.scale = Vector2(scale_factor, scale_factor)
 			bg_sprite_1.position = Vector2.ZERO
 			
-			var scaled_bg_width = bg_sprite_1.get_rect().size.x
+			scaled_bg_width = bg_sprite_1.get_rect().size.x
 			bg_sprite_2.position = Vector2(scaled_bg_width, 0)
 			
 			if background_container:
@@ -229,27 +237,12 @@ func connect_signals():
 
 # -------------------- DIFFICULTY CALCULATION --------------------
 func update_difficulty():
-	# Exponential growth: value = base * e^(rate * time)
 	var difficulty_multiplier = exp(difficulty_increase_rate * game_time)
 	
-	# Pipe speed increases exponentially
 	current_pipe_speed = min(pipe_speed_base * difficulty_multiplier, pipe_speed_base * speed_multiplier_max)
-	
-	# Spawn interval decreases exponentially (faster spawning)
 	current_spawn_interval = max(pipe_spawn_interval_base / difficulty_multiplier, spawn_interval_min)
-	
-	# Gap size decreases exponentially (harder to pass through)
 	current_pipe_gap = max(pipe_gap_base / difficulty_multiplier, gap_size_min)
-	
-	# Background scroll speed matches pipe speed
 	current_background_scroll_speed = background_scroll_speed_base * (current_pipe_speed / pipe_speed_base)
-
-# -------------------- INPUT HANDLING --------------------
-func _input(event):
-	if event is InputEventScreenTouch and event.pressed:
-		handle_tap()
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		handle_tap()
 
 func handle_tap():
 	if is_game_over:
@@ -261,6 +254,9 @@ func handle_tap():
 
 # -------------------- GAME LOOP --------------------
 func _process(delta: float):
+	if Input.is_action_just_pressed("touch") or Input.is_action_just_pressed("click"):
+		handle_tap()
+	
 	if is_game_over:
 		return
 	
@@ -269,15 +265,22 @@ func _process(delta: float):
 		player.position.y = player_start_position.y + sin(elapsed_time * player_idle_bob_speed / 1000.0) * player_idle_bob_amount
 		return
 	
-	# Update game time and difficulty
 	game_time += delta
-	update_difficulty()
 	
+	difficulty_update_timer += delta
+	if difficulty_update_timer >= DIFFICULTY_UPDATE_INTERVAL:
+		update_difficulty()
+		difficulty_update_timer = 0.0
+	
+	# Player physics
 	player_velocity.y += gravity * delta
 	player_velocity.y = min(player_velocity.y, max_fall_speed)
 	player.position += player_velocity * delta
-	player.rotation = lerp(player.rotation, clamp(player_velocity.y / 400.0, max_rotation_up, max_rotation_down), delta * rotation_speed)
 	
+	var target_rotation = clamp(player_velocity.y / 400.0, max_rotation_up, max_rotation_down)
+	player.rotation = lerp(player.rotation, target_rotation, delta * cached_half_rotation_speed)
+	
+	# Pipe spawning
 	pipe_spawn_timer += delta
 	if pipe_spawn_timer >= current_spawn_interval:
 		spawn_pipe()
@@ -288,61 +291,47 @@ func _process(delta: float):
 
 	if player.position.y > viewport_size.y or player.position.y < -50:
 		game_over()
+	
+	# Debug info
+	if show_debug_info and score_label:
+		score_label.text = "Score: %d | Pipes: %d" % [score, active_pipes_count]
 
 # -------------------- SCROLLING --------------------
 func scroll_background(delta: float):
-	var sprites = [bg_sprite_1, bg_sprite_2]
+	if bg_sprite_1 == null or bg_sprite_2 == null:
+		return
 	
-	if sprites[0] == null: return
-	
-	var scaled_bg_width = sprites[0].get_rect().size.x
 	var scroll_amount = current_background_scroll_speed * delta
 	
-	for sprite in sprites:
-		sprite.position.x -= scroll_amount
+	bg_sprite_1.position.x -= scroll_amount
+	bg_sprite_2.position.x -= scroll_amount
 	
-	var max_x = max(sprites[0].position.x, sprites[1].position.x)
-	
-	for sprite in sprites:
-		if sprite.position.x <= -scaled_bg_width:
-			sprite.position.x = max_x + scaled_bg_width
+	if bg_sprite_1.position.x <= -scaled_bg_width:
+		bg_sprite_1.position.x = bg_sprite_2.position.x + scaled_bg_width
+	elif bg_sprite_2.position.x <= -scaled_bg_width:
+		bg_sprite_2.position.x = bg_sprite_1.position.x + scaled_bg_width
 
-# -------------------- PIPE MANAGEMENT --------------------
+# -------------------- PIPE MANAGEMENT (FIXED) --------------------
 func spawn_pipe():
 	if not pipe_container or not pipe_scene:
 		return
 	
-	# Use 0 for absolute screen top
 	var world_top = 0.0 
-	
-	# Defines the bottom edge just above the visible ground layer
 	var world_bottom = viewport_size.y - ground_height_offset
-	
 	var game_area_height = world_bottom - world_top
 	
-	# Calculate safe pipe range using world coordinates
 	var safe_min = world_top + (game_area_height * min_pipe_height_ratio)
 	var safe_max = world_top + (game_area_height * max_pipe_height_ratio)
-	
 	var gap_center_y = randf_range(safe_min, safe_max)
-
-	var half_gap = current_pipe_gap / 2.0
+	var half_gap = current_pipe_gap * 0.5
 	
-	# Calculate the required height in world units
-	# Top pipe needs to reach from gap edge down to the world top (Y=0)
 	var top_pipe_height_needed = gap_center_y - half_gap - world_top
-	# Bottom pipe needs to reach from gap edge up to the world bottom
 	var bottom_pipe_height_needed = world_bottom - (gap_center_y + half_gap)
 	
 	var top_pipe = create_pipe(true, gap_center_y, top_pipe_height_needed)
 	var bottom_pipe = create_pipe(false, gap_center_y, bottom_pipe_height_needed)
 	
-	if top_pipe:
-		pipes.append(top_pipe)
-	if bottom_pipe:
-		pipes.append(bottom_pipe)
-	
-	# Score Area setup centered on the gap
+	# Score Area setup
 	var score_area = Area2D.new()
 	score_area.position = Vector2(pipe_spawn_x, gap_center_y)
 	score_area.name = "ScoreArea"
@@ -355,7 +344,16 @@ func spawn_pipe():
 	
 	score_area.area_entered.connect(_on_score_area_entered.bind(score_area))
 	pipe_container.add_child(score_area)
-	pipes.append(score_area)
+	
+	# Store as a group
+	var pipe_pair = {
+		"top": top_pipe,
+		"bottom": bottom_pipe,
+		"score_area": score_area,
+		"scored": false
+	}
+	pipe_pairs.append(pipe_pair)
+	active_pipes_count = pipe_pairs.size()
 
 func create_pipe(is_top: bool, gap_center_y: float, pipe_height_needed: float) -> Node2D:
 	if not pipe_scene:
@@ -370,13 +368,11 @@ func create_pipe(is_top: bool, gap_center_y: float, pipe_height_needed: float) -
 	pipe_container.add_child(pipe_instance)
 	pipe_instance.name = "Pipe"
 	
-	# 1. Get the components
 	var pipe_sprite = pipe_instance.get_node_or_null("Sprite2D")
 	var pipe_collision = pipe_instance.get_node_or_null("CollisionShape2D")
 	
-	# 2. Determine original dimensions 
-	var original_pipe_height = 300.0 # Assumed texture height
-	var original_pipe_width = 100.0    # Assumed texture width
+	var original_pipe_height = 300.0
+	var original_pipe_width = 100.0
 	if pipe_sprite and pipe_sprite.texture:
 		original_pipe_height = pipe_sprite.texture.get_height()
 		original_pipe_width = pipe_sprite.texture.get_width()
@@ -385,53 +381,67 @@ func create_pipe(is_top: bool, gap_center_y: float, pipe_height_needed: float) -
 		push_error("Pipe texture dimensions are zero, cannot scale pipe!")
 		return null
 	
-	var half_gap = current_pipe_gap / 2.0
+	var half_gap = current_pipe_gap * 0.5
 	var pipe_position: Vector2
 	
-	# 3. Calculate Scale Factors
 	var scale_factor_y = pipe_height_needed / original_pipe_height
 	var scale_factor_x = pipe_width / original_pipe_width
 	
 	if is_top:
-		# Top pipe: position is the bottom of the pipe (top edge of gap)
 		pipe_position = Vector2(pipe_spawn_x, gap_center_y - half_gap)
-		
-		# Set Scale: X scale is fixed, Y scale is stretched and flipped (negative)
 		pipe_instance.scale = Vector2(scale_factor_x, -scale_factor_y) 
 	else:
-		# Bottom pipe: position is the top of the pipe (bottom edge of gap)
 		pipe_position = Vector2(pipe_spawn_x, gap_center_y + half_gap + half_gap)
-		
-		# Set Scale: X scale is fixed, Y scale is stretched (positive)
 		pipe_instance.scale = Vector2(scale_factor_x, scale_factor_y)
 
 	pipe_instance.position = pipe_position
 	
-	# 4. Resize and Reposition Collision Shape
 	if pipe_collision and pipe_collision.shape is RectangleShape2D:
 		var shape = pipe_collision.shape as RectangleShape2D
-		
-		# Collision box size uses the target pipe_width and calculated height
 		shape.size = Vector2(pipe_width, pipe_height_needed)
 		
-		# Center the collision shape vertically relative to the pipe instance's origin (the gap edge)
 		if is_top:
-			# For top pipe (negatively scaled), move collision shape UP (negative Y)
-			pipe_collision.position = Vector2(0, -pipe_height_needed / 2.0)
+			pipe_collision.position = Vector2(0, -pipe_height_needed * 0.5)
 		else:
-			# For bottom pipe, move collision shape DOWN (positive Y)
-			pipe_collision.position = Vector2(0, pipe_height_needed / 2.0)
+			pipe_collision.position = Vector2(0, pipe_height_needed * 0.5)
 			
 	return pipe_instance
 
-
 func update_pipes(delta: float):
-	for i in range(pipes.size() - 1, -1, -1):
-		var pipe = pipes[i]
-		pipe.position.x -= current_pipe_speed * delta
-		if pipe.position.x < -pipe_width - 100: 
-			pipe.queue_free()
-			pipes.remove_at(i)
+	var speed_delta = current_pipe_speed * delta
+	
+	# Iterate backwards to safely remove items
+	for i in range(pipe_pairs.size() - 1, -1, -1):
+		var pair = pipe_pairs[i]
+		
+		# Move all components together
+		if pair.top and is_instance_valid(pair.top):
+			pair.top.position.x -= speed_delta
+		if pair.bottom and is_instance_valid(pair.bottom):
+			pair.bottom.position.x -= speed_delta
+		if pair.score_area and is_instance_valid(pair.score_area):
+			pair.score_area.position.x -= speed_delta
+		
+		# Check if pipes are off-screen
+		var check_x = INF
+		if pair.score_area and is_instance_valid(pair.score_area):
+			check_x = pair.score_area.position.x
+		elif pair.top and is_instance_valid(pair.top):
+			check_x = pair.top.position.x
+		elif pair.bottom and is_instance_valid(pair.bottom):
+			check_x = pair.bottom.position.x
+		
+		if check_x < deletion_x_threshold:
+			# Clean up all components
+			if pair.top and is_instance_valid(pair.top):
+				pair.top.queue_free()
+			if pair.bottom and is_instance_valid(pair.bottom):
+				pair.bottom.queue_free()
+			if pair.score_area and is_instance_valid(pair.score_area):
+				pair.score_area.queue_free()
+			
+			pipe_pairs.remove_at(i)
+			active_pipes_count = pipe_pairs.size()
 
 # -------------------- COLLISIONS --------------------
 func _on_player_collision(body: Node2D):
@@ -448,26 +458,32 @@ func _on_score_area_entered(area: Area2D, score_area: Area2D):
 		
 		if use_cool_ui and ui_manager:
 			ui_manager.update_score(score, player.position)
-		elif score_label:
-			score_label.text = str(score)
+		elif score_label and score != last_score:
+			if not show_debug_info:
+				score_label.text = str(score)
+			last_score = score
+			
 			if score_pop_duration > 0:
 				var tween = create_tween()
 				tween.tween_property(score_label, "scale", Vector2(score_pop_scale, score_pop_scale), score_pop_duration)
-				tween.tween_property(score_label, "scale", Vector2(1.0, 1.0), score_pop_duration)
+				tween.tween_property(score_label, "scale", Vector2.ONE, score_pop_duration)
 		
-		var idx = pipes.find(score_area)
-		if idx != -1:
-			pipes.remove_at(idx)
+		# Mark this pair as scored so we don't double-count
+		for pair in pipe_pairs:
+			if pair.score_area == score_area:
+				pair.scored = true
+				break
 		
+		# Disable the score area immediately
 		score_area.monitoring = false
 		score_area.set_process_mode(Node.PROCESS_MODE_DISABLED)
-		score_area.queue_free()
 
 # -------------------- GAME FLOW --------------------
 func start_game():
 	is_game_started = true
 	player_velocity = Vector2.ZERO
 	game_time = 0.0
+	difficulty_update_timer = 0.0
 	update_difficulty()
 	
 	if use_cool_ui and ui_manager:
@@ -497,21 +513,29 @@ func game_over():
 			final_score_label.text = "Score: " + str(score) + "\nBest: " + str(high_score)
 
 func restart_game():
-	for pipe in pipes:
-		pipe.queue_free()
-	pipes.clear()
+	# IMMEDIATE CLEANUP - Remove all children from pipe_container
+	if pipe_container:
+		for child in pipe_container.get_children():
+			pipe_container.remove_child(child)
+			child.queue_free()
+	
+	# Clear the tracking arrays
+	pipe_pairs.clear()
+	active_pipes_count = 0
+	
 	reset_game()
 
 func reset_game():
 	is_game_started = false
 	is_game_over = false
 	score = 0
+	last_score = -1
 	elapsed_time = 0.0
 	game_time = 0.0
 	player_velocity = Vector2.ZERO
 	pipe_spawn_timer = 0.0
+	difficulty_update_timer = 0.0
 	
-	# Reset difficulty to base values
 	current_pipe_speed = pipe_speed_base
 	current_spawn_interval = pipe_spawn_interval_base
 	current_pipe_gap = pipe_gap_base
@@ -525,8 +549,9 @@ func reset_game():
 		ui_manager.update_score(0, player.position)
 		ui_manager.update_high_score(high_score)
 	else:
-		score_label.text = "0"
-		score_label.scale = Vector2(1, 1)
+		if not show_debug_info:
+			score_label.text = "0"
+		score_label.scale = Vector2.ONE
 		start_label.visible = true
 		tap_hint.visible = true
 		game_over_panel.visible = false
