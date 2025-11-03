@@ -499,7 +499,6 @@ func game_over():
 	if is_new_record:
 		high_score = score
 	
-	pushToFirebase()
 	
 	if use_cool_ui and ui_manager:
 		ui_manager.show_game_over(score, high_score, player.position, is_new_record)
