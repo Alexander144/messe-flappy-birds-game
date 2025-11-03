@@ -254,7 +254,7 @@ func handle_tap():
 
 # -------------------- GAME LOOP --------------------
 func _process(delta: float):
-	if Input.is_action_just_pressed("touch") or Input.is_action_just_pressed("click"):
+	if Input.is_action_just_pressed("touch"):
 		handle_tap()
 	
 	if is_game_over:
