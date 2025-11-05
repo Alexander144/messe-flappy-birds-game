@@ -68,8 +68,8 @@ var pipe_spawn_x: float
 
 # -------------------- SCROLL & VISUAL SETTINGS --------------------
 @export_group("Scroll Settings")
-@export var background_scroll_speed_base: float = 50.0
-@export var parallax_scroll_scale: Vector2 = Vector2(0.5, 1.0)  # Parallax effect speed
+#@export var background_scroll_speed_base: float = 50.0
+#@export var parallax_scroll_scale: Vector2 = Vector2(0.5, 1.0)  # Parallax effect speed
 @export var ground_height_offset: float = 120.0 
 
 @export_group("Visual Settings")
@@ -144,7 +144,7 @@ func _ready():
 	current_pipe_speed = pipe_speed_base
 	current_spawn_interval = pipe_spawn_interval_base
 	current_pipe_gap = pipe_gap_base
-	current_background_scroll_speed = background_scroll_speed_base
+	#current_background_scroll_speed = background_scroll_speed_base
 	
 	setup_parallax_background()
 	setup_game_dimensions()  # Moved before apply_textures
@@ -189,8 +189,8 @@ func setup_parallax_background():
 		print("ParallaxLayer found: ", parallax_layer.name)
 	
 	# Configure ParallaxLayer
-	parallax_layer.motion_scale = parallax_scroll_scale
-	parallax_layer.motion_mirroring = Vector2(1920, 0)  # Will be updated in apply_textures()
+	#parallax_layer.motion_scale = parallax_scroll_scale
+	#parallax_layer.motion_mirroring = Vector2(1920, 0)  # Will be updated in apply_textures()
 	
 	if not background_sprite:
 		# Create Sprite2D if not assigned
@@ -300,7 +300,7 @@ func update_difficulty():
 	current_pipe_speed = min(pipe_speed_base * difficulty_multiplier, pipe_speed_base * speed_multiplier_max)
 	current_spawn_interval = max(pipe_spawn_interval_base / difficulty_multiplier, spawn_interval_min)
 	current_pipe_gap = max(pipe_gap_base / difficulty_multiplier, gap_size_min)
-	current_background_scroll_speed = background_scroll_speed_base * (current_pipe_speed / pipe_speed_base)
+	#current_background_scroll_speed = background_scroll_speed_base * (current_pipe_speed / pipe_speed_base)
 
 func handle_tap():
 	if is_game_over:
@@ -612,7 +612,7 @@ func reset_game():
 	current_pipe_speed = pipe_speed_base
 	current_spawn_interval = pipe_spawn_interval_base
 	current_pipe_gap = pipe_gap_base
-	current_background_scroll_speed = background_scroll_speed_base
+	#current_background_scroll_speed = background_scroll_speed_base
 	
 	player.position = player_start_position 
 	player.rotation = 0
