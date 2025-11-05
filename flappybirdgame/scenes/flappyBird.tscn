@@ -1,17 +1,15 @@
 [gd_scene load_steps=45 format=3 uid="uid://bxl56x6s2bx7i"]
 
 [ext_resource type="Script" uid="uid://u1j0f17l2qns" path="res://script/gamemanager.gd" id="1_cb5m5"]
+[ext_resource type="Texture2D" uid="uid://b5wnhf7ybytch" path="res://assets/background.png" id="3_2n0tp"]
 [ext_resource type="Texture2D" uid="uid://d221ffvqlbakq" path="res://assets/maskot.png" id="4_2n0tp"]
 [ext_resource type="PackedScene" uid="uid://1cjd8qwd4n8t" path="res://objects/ror.tscn" id="4_j0dff"]
 [ext_resource type="Script" uid="uid://cnqxnxhs33oc1" path="res://script/UIManager.gd" id="5_2n0tp"]
 
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_j0dff"]
-load_path = "res://.godot/imported/background.jpg-3c1ee7bbff6a1283595ccc69bb1d6acd.ctex"
-
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_oqtid"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_cb5m5"]
-size = Vector2(446.667, 385.185)
+size = Vector2(303.704, 303.704)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_j0dff"]
 atlas = ExtResource("4_2n0tp")
@@ -275,16 +273,26 @@ animations = [{
 
 [node name="root" type="Node2D"]
 
-[node name="GameManager" type="Node" parent="." node_paths=PackedStringArray("camera", "player", "player_sprite", "player_collision", "background_container", "bg_sprite_1", "bg_sprite_2", "pipe_container", "ui_layer", "score_label", "high_score_label", "start_label", "tap_hint", "game_over_panel", "game_over_label", "final_score_label", "restart_button")]
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+scroll_ignore_camera_zoom = true
+
+[node name="ParallaxLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0, 0)
+motion_mirroring = Vector2(1920, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/ParallaxLayer"]
+texture = ExtResource("3_2n0tp")
+
+[node name="GameManager" type="Node" parent="." node_paths=PackedStringArray("camera", "player", "player_sprite", "player_collision", "pipe_container", "parallax_background", "parallax_layer", "background_sprite", "ui_layer", "score_label", "high_score_label", "start_label", "tap_hint", "game_over_panel", "game_over_label", "final_score_label", "restart_button")]
 script = ExtResource("1_cb5m5")
 camera = NodePath("../Camera2D")
 player = NodePath("../Player")
 player_sprite = NodePath("../Player/AnimatedSprite2D")
 player_collision = NodePath("../Player/PlayerCollision")
-background_container = NodePath("../Background")
-bg_sprite_1 = NodePath("../Background/BG1")
-bg_sprite_2 = NodePath("../Background/BG2")
 pipe_container = NodePath("../PipeContainer")
+parallax_background = NodePath("../ParallaxBackground")
+parallax_layer = NodePath("../ParallaxBackground/ParallaxLayer")
+background_sprite = NodePath("../ParallaxBackground/ParallaxLayer/Sprite2D")
 ui_layer = NodePath("../UI")
 score_label = NodePath("../UI/ScoreLabel")
 high_score_label = NodePath("../UI/HighScoreLabel")
@@ -295,7 +303,7 @@ game_over_label = NodePath("../UI/GameOverPanel/GameOverLabel")
 final_score_label = NodePath("../UI/GameOverPanel/FinishScoreLabel")
 restart_button = NodePath("../UI/GameOverPanel/RestartButton")
 bird_texture = ExtResource("4_2n0tp")
-background_texture = SubResource("CompressedTexture2D_j0dff")
+background_texture = ExtResource("3_2n0tp")
 pipe_scene = ExtResource("4_j0dff")
 jump_force = -500.0
 pipe_gap_base = 360.0
@@ -304,17 +312,9 @@ difficulty_increase_rate = 0.09
 speed_multiplier_max = 2.0
 spawn_interval_min = 1.0
 gap_size_min = 190.0
+parallax_scroll_scale = Vector2(2, 1)
 
 [node name="Camera2D" type="Camera2D" parent="."]
-
-[node name="Background" type="Node2D" parent="."]
-
-[node name="BG1" type="Sprite2D" parent="Background"]
-texture = SubResource("CompressedTexture2D_j0dff")
-
-[node name="BG2" type="Sprite2D" parent="Background"]
-position = Vector2(736, 0)
-texture = SubResource("CompressedTexture2D_j0dff")
 
 [node name="Ground" type="Node2D" parent="."]
 
@@ -335,7 +335,7 @@ shape = SubResource("RectangleShape2D_oqtid")
 scale = Vector2(0.27, 0.27)
 
 [node name="PlayerCollision" type="CollisionShape2D" parent="Player"]
-position = Vector2(-156.667, -7.40737)
+position = Vector2(-170.37, 7.40741)
 scale = Vector2(0.999999, 0.999999)
 shape = SubResource("RectangleShape2D_cb5m5")
 

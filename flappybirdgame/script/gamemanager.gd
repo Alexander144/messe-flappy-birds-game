@@ -1,7 +1,7 @@
 extends Node
 
 # ============================================
-# FLAPPY BIRD - FIXED RESTART LAG
+# FLAPPY BIRD - PARALLAX BACKGROUND
 # ============================================
 
 # -------------------- NODE REFERENCES --------------------
@@ -10,11 +10,14 @@ extends Node
 @export var player: Area2D
 @export var player_sprite: AnimatedSprite2D
 @export var player_collision: CollisionShape2D
-@export var background_container: Node2D
-@export var bg_sprite_1: Sprite2D
-@export var bg_sprite_2: Sprite2D
 @export var ground_container: Node2D
 @export var pipe_container: Node2D
+
+# Parallax Background
+@export_group("Parallax Background")
+@export var parallax_background: ParallaxBackground
+@export var parallax_layer: ParallaxLayer
+@export var background_sprite: Sprite2D
 
 @export_group("UI Nodes")
 @export var ui_layer: CanvasLayer
@@ -66,6 +69,7 @@ var pipe_spawn_x: float
 # -------------------- SCROLL & VISUAL SETTINGS --------------------
 @export_group("Scroll Settings")
 @export var background_scroll_speed_base: float = 50.0
+@export var parallax_scroll_scale: Vector2 = Vector2(0.5, 1.0)  # Parallax effect speed
 @export var ground_height_offset: float = 120.0 
 
 @export_group("Visual Settings")
@@ -117,7 +121,7 @@ var ui_manager: UIManager
 var http_request: HTTPRequest
 
 # -------------------- OPTIMIZATION VARIABLES --------------------
-var scaled_bg_width: float = 0.0
+var parallax_scroll_offset: float = 0.0
 var last_score: int = -1
 var difficulty_update_timer: float = 0.0
 const DIFFICULTY_UPDATE_INTERVAL: float = 0.5
@@ -132,9 +136,20 @@ func _ready():
 	
 	cached_half_rotation_speed = rotation_speed * 0.5
 	
-	apply_textures()
+	# IMPORTANT: Get viewport size FIRST before setting up anything else
+	viewport_size = get_viewport().get_visible_rect().size
+	print("Viewport size: ", viewport_size)
+	
+	# Initialize difficulty values BEFORE setup
+	current_pipe_speed = pipe_speed_base
+	current_spawn_interval = pipe_spawn_interval_base
+	current_pipe_gap = pipe_gap_base
+	current_background_scroll_speed = background_scroll_speed_base
+	
+	setup_parallax_background()
+	setup_game_dimensions()  # Moved before apply_textures
+	apply_textures()  # This now has correct viewport_size
 	connect_signals()
-	setup_game_dimensions()
 	
 	if use_cool_ui:
 		setup_cool_ui()
@@ -146,6 +161,48 @@ func _ready():
 	http_request = HTTPRequest.new()
 	add_child(http_request)
 	http_request.request_completed.connect(_on_request_completed)
+
+
+
+func setup_parallax_background():
+	if not parallax_background:
+		# Create ParallaxBackground if not assigned
+		parallax_background = ParallaxBackground.new()
+		parallax_background.name = "ParallaxBackground"
+		# Add it as the FIRST child to render behind everything
+		add_child(parallax_background)
+		move_child(parallax_background, 0)
+		print("Created ParallaxBackground")
+	else:
+		print("ParallaxBackground found: ", parallax_background.name)
+	
+	# Configure ParallaxBackground
+	parallax_background.scroll_ignore_camera_zoom = true
+	
+	if not parallax_layer:
+		# Create ParallaxLayer if not assigned
+		parallax_layer = ParallaxLayer.new()
+		parallax_layer.name = "ParallaxLayer"
+		parallax_background.add_child(parallax_layer)
+		print("Created ParallaxLayer")
+	else:
+		print("ParallaxLayer found: ", parallax_layer.name)
+	
+	# Configure ParallaxLayer
+	parallax_layer.motion_scale = parallax_scroll_scale
+	parallax_layer.motion_mirroring = Vector2(1920, 0)  # Will be updated in apply_textures()
+	
+	if not background_sprite:
+		# Create Sprite2D if not assigned
+		background_sprite = Sprite2D.new()
+		background_sprite.name = "BackgroundSprite"
+		parallax_layer.add_child(background_sprite)
+		print("Created BackgroundSprite")
+	else:
+		print("BackgroundSprite found: ", background_sprite.name)
+	
+	# Configure Sprite2D
+	background_sprite.centered = false
 
 func setup_cool_ui():
 	ui_manager = UIManager.new()
@@ -161,7 +218,8 @@ func setup_cool_ui():
 		ui_layer.hide()
 
 func setup_game_dimensions():
-	viewport_size = get_viewport().get_visible_rect().size
+	# viewport_size already set in _ready()
+	print("Setting up game dimensions with viewport: ", viewport_size)
 	
 	player_start_position = Vector2(viewport_size.x * player_start_x_ratio, viewport_size.y * player_start_y_ratio)
 	pipe_spawn_x = viewport_size.x + 50.0
@@ -172,6 +230,7 @@ func setup_game_dimensions():
 	
 	if not is_game_started:
 		player.position = player_start_position
+
 	
 func _notification(what):
 	if what == NOTIFICATION_WM_SIZE_CHANGED:
@@ -191,34 +250,33 @@ func validate_nodes() -> bool:
 func apply_textures():
 	player_sprite.play('default')
 	
-	if background_texture:
-		if bg_sprite_1:
-			bg_sprite_1.texture = background_texture
-			bg_sprite_1.centered = false
-		if bg_sprite_2:
-			bg_sprite_2.texture = background_texture
-			bg_sprite_2.centered = false
+	if background_texture and background_sprite:
+		background_sprite.texture = background_texture
+		print("Background texture assigned: ", background_texture.get_size())
+		
+		# Scale background to fit viewport height
+		var texture_height = background_texture.get_height()
+		if texture_height > 0:
+			var scale_factor = viewport_size.y / texture_height
+			background_sprite.scale = Vector2(scale_factor, scale_factor)
+			print("Background scale: ", background_sprite.scale)
+		
+		# Update motion_mirroring based on scaled texture width
+		if parallax_layer:
+			var scaled_width = background_texture.get_width() * background_sprite.scale.x
+			parallax_layer.motion_mirroring = Vector2(scaled_width, 0)
+			print("Motion mirroring: ", parallax_layer.motion_mirroring)
+	else:
+		if not background_texture:
+			push_error("Background texture not assigned!")
+		if not background_sprite:
+			push_error("Background sprite not found!")
 
 func setup_positions():
 	if camera:
-		camera.position = viewport_size / 2 
-	
-	if background_texture and bg_sprite_1 and bg_sprite_2:
-		var bg_target_height = viewport_size.y
-		var texture_height = background_texture.get_height()
-		
-		if texture_height > 0:
-			var scale_factor = bg_target_height / texture_height
-			
-			bg_sprite_1.scale = Vector2(scale_factor, scale_factor)
-			bg_sprite_2.scale = Vector2(scale_factor, scale_factor)
-			bg_sprite_1.position = Vector2.ZERO
-			
-			scaled_bg_width = bg_sprite_1.get_rect().size.x
-			bg_sprite_2.position = Vector2(scaled_bg_width, 0)
-			
-			if background_container:
-				background_container.position = Vector2.ZERO
+		camera.position = viewport_size / 2
+		camera.enabled = true
+		print("Camera position: ", camera.position)
 
 func setup_ui_properties():
 	if score_label:
@@ -252,17 +310,21 @@ func handle_tap():
 	else:
 		player_velocity.y = jump_force
 
+func _input(event):
+	if (event is InputEventScreenTouch and event.pressed) \
+	or (event is InputEventMouseButton and event.pressed):
+		if event.pressed:
+			handle_tap()
+
 # -------------------- GAME LOOP --------------------
 func _process(delta: float):
-	if Input.is_action_just_pressed("touch"):
-		handle_tap()
-	
 	if is_game_over:
 		return
 	
 	if not is_game_started:
 		elapsed_time += delta
 		player.position.y = player_start_position.y + sin(elapsed_time * player_idle_bob_speed / 1000.0) * player_idle_bob_amount
+		scroll_background(delta * 0.3)  # Slow scroll during idle
 		return
 	
 	game_time += delta
@@ -297,19 +359,17 @@ func _process(delta: float):
 		score_label.text = "Score: %d | Pipes: %d" % [score, active_pipes_count]
 
 # -------------------- SCROLLING --------------------
+
 func scroll_background(delta: float):
-	if bg_sprite_1 == null or bg_sprite_2 == null:
+	if not parallax_background:
 		return
 	
 	var scroll_amount = current_background_scroll_speed * delta
+	parallax_scroll_offset += scroll_amount
 	
-	bg_sprite_1.position.x -= scroll_amount
-	bg_sprite_2.position.x -= scroll_amount
-	
-	if bg_sprite_1.position.x <= -scaled_bg_width:
-		bg_sprite_1.position.x = bg_sprite_2.position.x + scaled_bg_width
-	elif bg_sprite_2.position.x <= -scaled_bg_width:
-		bg_sprite_2.position.x = bg_sprite_1.position.x + scaled_bg_width
+	# Update parallax background scroll base offset (this is the correct property)
+	parallax_background.scroll_base_offset.x = -parallax_scroll_offset
+
 
 # -------------------- PIPE MANAGEMENT (FIXED) --------------------
 func spawn_pipe():
@@ -408,6 +468,9 @@ func create_pipe(is_top: bool, gap_center_y: float, pipe_height_needed: float) -
 	return pipe_instance
 
 func update_pipes(delta: float):
+	if not is_game_started and not is_game_over:
+		return  # Don't process pipes during idle state
+		
 	var speed_delta = current_pipe_speed * delta
 	
 	# Iterate backwards to safely remove items
@@ -499,7 +562,6 @@ func game_over():
 	if is_new_record:
 		high_score = score
 	
-	
 	if use_cool_ui and ui_manager:
 		ui_manager.show_game_over(score, high_score, player.position, is_new_record)
 		ui_manager.update_high_score(high_score)
@@ -512,17 +574,28 @@ func game_over():
 			final_score_label.text = "Score: " + str(score) + "\nBest: " + str(high_score)
 
 func restart_game():
-	# IMMEDIATE CLEANUP - Remove all children from pipe_container
+	# OPTIMIZED CLEANUP - Process in background
 	if pipe_container:
-		for child in pipe_container.get_children():
-			pipe_container.remove_child(child)
+		# Get all children at once
+		var children = pipe_container.get_children()
+		
+		# Disable processing immediately to prevent any updates
+		for child in children:
+			child.set_process(false)
+			child.set_physics_process(false)
+			child.set_process_input(false)
+			child.set_process_unhandled_input(false)
+			
+		# Now queue them for deletion
+		for child in children:
 			child.queue_free()
 	
-	# Clear the tracking arrays
+	# Clear the tracking arrays immediately
 	pipe_pairs.clear()
 	active_pipes_count = 0
 	
-	reset_game()
+	# Defer the reset to next frame to spread the load
+	call_deferred("reset_game")
 
 func reset_game():
 	is_game_started = false
@@ -534,6 +607,7 @@ func reset_game():
 	player_velocity = Vector2.ZERO
 	pipe_spawn_timer = 0.0
 	difficulty_update_timer = 0.0
+	parallax_scroll_offset = 0.0
 	
 	current_pipe_speed = pipe_speed_base
 	current_spawn_interval = pipe_spawn_interval_base
@@ -542,6 +616,10 @@ func reset_game():
 	
 	player.position = player_start_position 
 	player.rotation = 0
+	
+	# Reset parallax scroll
+	if parallax_background:
+		parallax_background.scroll_offset = Vector2.ZERO
 	
 	if use_cool_ui and ui_manager:
 		ui_manager.show_start_screen()
