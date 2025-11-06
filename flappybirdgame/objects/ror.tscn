@@ -1,19 +1,24 @@
-[gd_scene load_steps=3 format=3 uid="uid://1cjd8qwd4n8t"]
+[gd_scene load_steps=4 format=3 uid="uid://1cjd8qwd4n8t"]
 
+[ext_resource type="Script" uid="uid://rb6imm73wn0b" path="res://script/lightning_effect.gd" id="1_20pk2"]
 [ext_resource type="Texture2D" uid="uid://b7uy0yk5b7yof" path="res://assets/ror.png" id="1_ep6vt"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_20pk2"]
-size = Vector2(37, 423)
+size = Vector2(37, 1594.5)
 
 [node name="Ror" type="Node2D"]
 
 [node name="Ror" type="Sprite2D" parent="."]
-position = Vector2(0, 214.5)
+position = Vector2(0, 801)
 texture = ExtResource("1_ep6vt")
 
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
 position = Vector2(0, 214.5)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
-position = Vector2(0.5, 0.5)
+position = Vector2(0.5, 586.25)
 shape = SubResource("RectangleShape2D_20pk2")
+
+[node name="Line2D" type="Line2D" parent="."]
+position = Vector2(0, 12)
+script = ExtResource("1_20pk2")

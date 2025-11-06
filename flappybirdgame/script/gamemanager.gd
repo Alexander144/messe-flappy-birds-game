@@ -372,6 +372,7 @@ func scroll_background(delta: float):
 
 
 # -------------------- PIPE MANAGEMENT (FIXED) --------------------
+# -------------------- PIPE MANAGEMENT (FIXED SIZE CABLES) --------------------
 func spawn_pipe():
 	if not pipe_container or not pipe_scene:
 		return
@@ -385,11 +386,9 @@ func spawn_pipe():
 	var gap_center_y = randf_range(safe_min, safe_max)
 	var half_gap = current_pipe_gap * 0.5
 	
-	var top_pipe_height_needed = gap_center_y - half_gap - world_top
-	var bottom_pipe_height_needed = world_bottom - (gap_center_y + half_gap)
-	
-	var top_pipe = create_pipe(true, gap_center_y, top_pipe_height_needed)
-	var bottom_pipe = create_pipe(false, gap_center_y, bottom_pipe_height_needed)
+	# Create pipes with fixed size - they extend outside the screen
+	var top_pipe = create_fixed_pipe(true, gap_center_y)
+	var bottom_pipe = create_fixed_pipe(false, gap_center_y)
 	
 	# Score Area setup
 	var score_area = Area2D.new()
@@ -415,7 +414,7 @@ func spawn_pipe():
 	pipe_pairs.append(pipe_pair)
 	active_pipes_count = pipe_pairs.size()
 
-func create_pipe(is_top: bool, gap_center_y: float, pipe_height_needed: float) -> Node2D:
+func create_fixed_pipe(is_top: bool, gap_center_y: float) -> Node2D:
 	if not pipe_scene:
 		push_error("pipe_scene is not assigned!")
 		return null
@@ -430,6 +429,7 @@ func create_pipe(is_top: bool, gap_center_y: float, pipe_height_needed: float) -
 	
 	var pipe_sprite = pipe_instance.get_node_or_null("Sprite2D")
 	var pipe_collision = pipe_instance.get_node_or_null("CollisionShape2D")
+	var lightning = pipe_instance.get_node_or_null("Line2D")
 	
 	var original_pipe_height = 300.0
 	var original_pipe_width = 100.0
@@ -444,28 +444,57 @@ func create_pipe(is_top: bool, gap_center_y: float, pipe_height_needed: float) -
 	var half_gap = current_pipe_gap * 0.5
 	var pipe_position: Vector2
 	
-	var scale_factor_y = pipe_height_needed / original_pipe_height
 	var scale_factor_x = pipe_width / original_pipe_width
+	var collision_height = viewport_size.y * 2
+	
+	if pipe_sprite:
+		pipe_sprite.centered = true
+	
+	# Calculate cable endpoints for lightning IN LOCAL COORDINATES
+	var cable_start: Vector2
+	var cable_end: Vector2
 	
 	if is_top:
-		pipe_position = Vector2(pipe_spawn_x, gap_center_y - half_gap)
-		pipe_instance.scale = Vector2(scale_factor_x, -scale_factor_y) 
-	else:
-		pipe_position = Vector2(pipe_spawn_x, gap_center_y + half_gap + half_gap)
-		pipe_instance.scale = Vector2(scale_factor_x, scale_factor_y)
-
-	pipe_instance.position = pipe_position
-	
-	if pipe_collision and pipe_collision.shape is RectangleShape2D:
-		var shape = pipe_collision.shape as RectangleShape2D
-		shape.size = Vector2(pipe_width, pipe_height_needed)
+		# Top pipe is flipped (scale.y = -1)
+		pipe_position = Vector2(pipe_spawn_x, gap_center_y - half_gap - original_pipe_height * 0.5)
+		pipe_instance.scale = Vector2(scale_factor_x, -1.0)
+		pipe_instance.position = pipe_position
 		
-		if is_top:
-			pipe_collision.position = Vector2(0, -pipe_height_needed * 0.5)
-		else:
-			pipe_collision.position = Vector2(0, pipe_height_needed * 0.5)
-			
+		# For flipped pipe: local positive Y goes UP in world space
+		# Lightning from bottom edge of visible pipe upward to top of screen
+		cable_start = Vector2(0, -original_pipe_height * 0.01)  # Top edge of pipe (in local coords)
+		cable_end = Vector2(0, -original_pipe_height * 0.1)  # Extend to bottom
+		
+		if pipe_collision and pipe_collision.shape is RectangleShape2D:
+			var shape = pipe_collision.shape as RectangleShape2D
+			shape.size = Vector2(pipe_width, collision_height)
+			pipe_collision.position = Vector2(0, -collision_height * 0.5)
+	else:
+		# Bottom pipe (normal orientation)
+		pipe_position = Vector2(pipe_spawn_x, gap_center_y + half_gap + original_pipe_height * 0.5)
+		pipe_instance.scale = Vector2(scale_factor_x, 1.0)
+		pipe_instance.position = pipe_position
+		
+		# Lightning from top edge of pipe downward to bottom of screen
+		var world_bottom = viewport_size.y - ground_height_offset
+		var distance_to_bottom = world_bottom - pipe_position.y
+		
+		cable_start = Vector2(0, -original_pipe_height * 0.01)  # Top edge of pipe (in local coords)
+		cable_end = Vector2(0, -original_pipe_height * 0.1)  # Extend to bottom
+		
+		if pipe_collision and pipe_collision.shape is RectangleShape2D:
+			var shape = pipe_collision.shape as RectangleShape2D
+			shape.size = Vector2(pipe_width, collision_height)
+			pipe_collision.position = Vector2(0, collision_height * 0.5)
+	
+	# Setup lightning cable endpoints
+	if lightning and lightning.has_method("setup_cable"):
+		lightning.call_deferred("setup_cable", cable_start, cable_end, is_top)
+		print("Setting up lightning - IsTop: ", is_top, " Start: ", cable_start, " End: ", cable_end)
+	
 	return pipe_instance
+
+
 
 func update_pipes(delta: float):
 	if not is_game_started and not is_game_over:
