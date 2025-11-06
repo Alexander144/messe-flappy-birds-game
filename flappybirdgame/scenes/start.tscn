@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://g1jdolrs4lwu"]
+[gd_scene load_steps=8 format=3 uid="uid://g1jdolrs4lwu"]
 
 [ext_resource type="Texture2D" uid="uid://xt6ohrb2my5m" path="res://assets/Logo.png" id="1_kdmts"]
 [ext_resource type="Texture2D" uid="uid://d00oamac86tvl" path="res://assets/maskot2.png" id="2_0auqf"]
 [ext_resource type="Texture2D" uid="uid://f7rivurpwsbm" path="res://assets/text1.png" id="3_y16t7"]
 [ext_resource type="Texture2D" uid="uid://bhrjuchtrivgh" path="res://assets/text2.png" id="4_4ge6i"]
 [ext_resource type="Script" uid="uid://c4s08sic53t1i" path="res://script/start_game.gd" id="5_0auqf"]
+[ext_resource type="StyleBox" uid="uid://dg845budiyvvc" path="res://shader/input.tres" id="5_4ge6i"]
 [ext_resource type="StyleBox" uid="uid://dxrayvnw7ardq" path="res://shader/start_button.tres" id="5_y16t7"]
 
 [node name="Start" type="Node2D"]
@@ -18,7 +19,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 6
 size_flags_vertical = 3
 
 [node name="ColorRect" type="ColorRect" parent="Register/Control"]
@@ -29,61 +30,84 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="VBoxContainer2" type="VBoxContainer" parent="Register/Control"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -515.0
+offset_right = 335.0
+grow_vertical = 0
+scale = Vector2(1.54, 1.54)
+size_flags_vertical = 3
+alignment = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="Register/Control/VBoxContainer2"]
+layout_mode = 2
+theme_override_constants/margin_bottom = 500
+
+[node name="TextureRect" type="TextureRect" parent="Register/Control/VBoxContainer2/MarginContainer"]
+layout_mode = 2
+texture = ExtResource("2_0auqf")
+
 [node name="VBoxContainer" type="VBoxContainer" parent="Register/Control"]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
+scale = Vector2(2.52, 2.52)
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="Register/Control/VBoxContainer"]
 layout_mode = 2
 
-[node name="TextureRect" type="TextureRect" parent="Register/Control/VBoxContainer/HBoxContainer2"]
+[node name="MarginContainer" type="MarginContainer" parent="Register/Control/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+
+[node name="TextureRect" type="TextureRect" parent="Register/Control/VBoxContainer/HBoxContainer2/MarginContainer"]
 layout_mode = 2
 texture = ExtResource("1_kdmts")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Register/Control/VBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-alignment = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="Register/Control/VBoxContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_constants/margin_top = 100
-
-[node name="TextureRect" type="TextureRect" parent="Register/Control/VBoxContainer/VBoxContainer/MarginContainer"]
-layout_mode = 2
-texture = ExtResource("2_0auqf")
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Register/Control"]
+[node name="Control" type="Control" parent="Register/Control"]
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = 5
 anchor_left = 0.5
-anchor_top = 0.5
 anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -157.5
-offset_top = -34.5
-offset_right = 157.5
-offset_bottom = 34.5
+offset_top = 650.0
+offset_bottom = 650.0
 grow_horizontal = 2
-grow_vertical = 2
-size_flags_horizontal = 4
+scale = Vector2(1.29, 1.29)
 size_flags_vertical = 4
-alignment = 1
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Register/Control/HBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="Register/Control/Control"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -176.0
+offset_top = -241.0
+offset_right = 176.0
+offset_bottom = 241.0
+grow_horizontal = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Register/Control/Control/MarginContainer"]
 layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Register/Control/Control/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 28
 
-[node name="TextureRect" type="TextureRect" parent="Register/Control/HBoxContainer/VBoxContainer"]
+[node name="TextureRect" type="TextureRect" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 texture = ExtResource("3_y16t7")
 
-[node name="TextureRect2" type="TextureRect" parent="Register/Control/HBoxContainer/VBoxContainer"]
+[node name="TextureRect2" type="TextureRect" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 texture = ExtResource("4_4ge6i")
 
-[node name="BedriftNavn" type="TextEdit" parent="Register/Control/HBoxContainer/VBoxContainer"]
+[node name="BedriftNavn" type="TextEdit" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/word_highlighted_color = Color(0, 0, 0, 1)
 theme_override_colors/current_line_color = Color(0, 0, 0, 1)
@@ -99,11 +123,14 @@ theme_override_colors/caret_color = Color(0, 0, 0, 1)
 theme_override_colors/search_result_border_color = Color(0, 0, 0, 1)
 theme_override_colors/search_result_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = ExtResource("5_4ge6i")
+theme_override_styles/focus = ExtResource("5_4ge6i")
+theme_override_styles/read_only = ExtResource("5_4ge6i")
 placeholder_text = "Bedriftsnavn"
 emoji_menu_enabled = false
 scroll_fit_content_height = true
 
-[node name="Navn" type="TextEdit" parent="Register/Control/HBoxContainer/VBoxContainer"]
+[node name="Navn" type="TextEdit" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/word_highlighted_color = Color(0, 0, 0, 1)
 theme_override_colors/current_line_color = Color(0, 0, 0, 1)
@@ -123,7 +150,7 @@ placeholder_text = "Navn"
 emoji_menu_enabled = false
 scroll_fit_content_height = true
 
-[node name="Mail" type="TextEdit" parent="Register/Control/HBoxContainer/VBoxContainer"]
+[node name="Mail" type="TextEdit" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/word_highlighted_color = Color(0, 0, 0, 1)
 theme_override_colors/current_line_color = Color(0, 0, 0, 1)
@@ -143,7 +170,7 @@ placeholder_text = "Epost"
 emoji_menu_enabled = false
 scroll_fit_content_height = true
 
-[node name="Tlf" type="TextEdit" parent="Register/Control/HBoxContainer/VBoxContainer"]
+[node name="Tlf" type="TextEdit" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/word_highlighted_color = Color(0, 0, 0, 1)
 theme_override_colors/current_line_color = Color(0, 0, 0, 1)
@@ -163,12 +190,12 @@ placeholder_text = "Telefonnummer"
 emoji_menu_enabled = false
 scroll_fit_content_height = true
 
-[node name="MarginContainer" type="MarginContainer" parent="Register/Control/HBoxContainer/VBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/margin_left = 100
 theme_override_constants/margin_right = 100
 
-[node name="Button" type="Button" parent="Register/Control/HBoxContainer/VBoxContainer/MarginContainer"]
+[node name="Button" type="Button" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer/MarginContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_styles/hover = ExtResource("5_y16t7")
@@ -176,4 +203,4 @@ theme_override_styles/normal = ExtResource("5_y16t7")
 text = "Start spillet"
 script = ExtResource("5_0auqf")
 
-[connection signal="pressed" from="Register/Control/HBoxContainer/VBoxContainer/MarginContainer/Button" to="Register/Control/HBoxContainer/VBoxContainer/MarginContainer/Button" method="_on_pressed"]
+[connection signal="pressed" from="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer/MarginContainer/Button" to="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer/MarginContainer/Button" method="_on_pressed"]
