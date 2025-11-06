@@ -21,6 +21,7 @@ var combo_timer: float = 0.0
 
 func _ready():
 	setup_ui()
+	print('')
 	
 func setup_ui():
 	# Create main containers
