@@ -9,7 +9,7 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_oqtid"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_cb5m5"]
-size = Vector2(137.038, 281.482)
+size = Vector2(237.037, 474.075)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2n0tp"]
 atlas = ExtResource("4_2n0tp")
@@ -359,13 +359,13 @@ shape = SubResource("RectangleShape2D_oqtid")
 scale = Vector2(0.27, 0.27)
 
 [node name="PlayerCollision" type="CollisionShape2D" parent="Player"]
-position = Vector2(-87.0368, 18.5185)
+position = Vector2(-88.8889, 51.8518)
 scale = Vector2(0.999999, 0.999999)
 shape = SubResource("RectangleShape2D_cb5m5")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Player"]
-position = Vector2(-99, 21.75)
-scale = Vector2(1.38942, 1.45847)
+position = Vector2(-118.519, 48.1481)
+scale = Vector2(2.29594, 2.41005)
 sprite_frames = SubResource("SpriteFrames_x1tax")
 frame_progress = 0.502761
 speed_scale = 2.0
