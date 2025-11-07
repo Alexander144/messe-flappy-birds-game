@@ -18,10 +18,11 @@ var combo_timer: float = 0.0
 @export var shake_decay: float = 5.0
 @export var max_shake: float = 20.0
 @export var combo_timeout: float = 2.0
+@export var start_scene_path: String = "res://scenes/start.tscn"  # Adjust path as needed
 
 func _ready():
 	setup_ui()
-	print('')
+	print('UI Manager ready')
 	
 func setup_ui():
 	# Create main containers
@@ -35,7 +36,7 @@ func create_score_ui():
 	# Score label with shadow effect
 	score_label = Label.new()
 	score_label.name = "ScoreLabel"
-	score_label.text = "0"
+	score_label.text = "0 poeng"
 	score_label.position = Vector2(0, 80)
 	score_label.size = Vector2(get_viewport().get_visible_rect().size.x, 120)
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -80,55 +81,64 @@ func create_start_screen():
 	start_container.size = viewport_size
 	add_child(start_container)
 	
+	# Purple/lavender background
+	var bg = ColorRect.new()
+	bg.color = Color(0.75, 0.7, 0.82)  # Lavender color like in the image
+	bg.size = viewport_size
+	start_container.add_child(bg)
+	
+	# DRIFTI branding at top
+	var branding = Label.new()
+	branding.text = "DRIFTI"
+	branding.position = Vector2(30, 30)
+	branding.size = Vector2(200, 50)
+	branding.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	branding.add_theme_font_size_override("font_size", 32)
+	branding.add_theme_color_override("font_color", Color(0.6, 0.4, 0.7))  # Purple
+	start_container.add_child(branding)
+	
 	# Title with glow effect
 	var title = Label.new()
-	title.text = "Drifti"
+	title.text = "Flappy Bird"
 	title.position = Vector2(0, viewport_size.y * 0.25)
 	title.size = Vector2(viewport_size.x, 150)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 84)
-	title.add_theme_color_override("font_color", Color(1, 0.9, 0.2))  # Golden yellow
-	title.add_theme_color_override("font_shadow_color", Color(1, 0.5, 0, 0.9))
+	title.add_theme_color_override("font_color", Color(0.2, 0.15, 0.3))  # Dark purple
+	title.add_theme_color_override("font_shadow_color", Color(1, 1, 1, 0.3))
 	title.add_theme_constant_override("shadow_offset_x", 0)
 	title.add_theme_constant_override("shadow_offset_y", 0)
-	title.add_theme_constant_override("shadow_outline_size", 12)
+	title.add_theme_constant_override("shadow_outline_size", 4)
 	start_container.add_child(title)
 	
 	# Animated title effect
 	var title_tween = create_tween().set_loops()
-	title_tween.tween_property(title, "scale", Vector2(1.1, 1.1), 0.8).set_ease(Tween.EASE_IN_OUT)
+	title_tween.tween_property(title, "scale", Vector2(1.05, 1.05), 0.8).set_ease(Tween.EASE_IN_OUT)
 	title_tween.tween_property(title, "scale", Vector2(1.0, 1.0), 0.8).set_ease(Tween.EASE_IN_OUT)
 	
 	# Tap to start with pulsing effect
 	var tap_label = Label.new()
-	tap_label.text = "TAP TO START"
+	tap_label.text = "Trykk for å starte"
 	tap_label.position = Vector2(0, viewport_size.y * 0.55)
 	tap_label.size = Vector2(viewport_size.x, 80)
 	tap_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	tap_label.add_theme_font_size_override("font_size", 48)
-	tap_label.add_theme_color_override("font_color", Color.WHITE)
-	tap_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
-	tap_label.add_theme_constant_override("shadow_offset_x", 3)
-	tap_label.add_theme_constant_override("shadow_offset_y", 3)
-	tap_label.add_theme_constant_override("shadow_outline_size", 6)
+	tap_label.add_theme_font_size_override("font_size", 36)
+	tap_label.add_theme_color_override("font_color", Color(0.2, 0.15, 0.3))
 	start_container.add_child(tap_label)
 	
 	# Pulsing animation
 	var tap_tween = create_tween().set_loops()
-	tap_tween.tween_property(tap_label, "modulate:a", 0.3, 0.6).set_ease(Tween.EASE_IN_OUT)
+	tap_tween.tween_property(tap_label, "modulate:a", 0.4, 0.6).set_ease(Tween.EASE_IN_OUT)
 	tap_tween.tween_property(tap_label, "modulate:a", 1.0, 0.6).set_ease(Tween.EASE_IN_OUT)
 	
 	# Instructions
 	var instructions = Label.new()
-	instructions.text = "AVOID THE PIPES!"
+	instructions.text = "Unngå rørene!"
 	instructions.position = Vector2(0, viewport_size.y * 0.7)
 	instructions.size = Vector2(viewport_size.x, 60)
 	instructions.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	instructions.add_theme_font_size_override("font_size", 32)
-	instructions.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
-	instructions.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
-	instructions.add_theme_constant_override("shadow_offset_x", 2)
-	instructions.add_theme_constant_override("shadow_offset_y", 2)
+	instructions.add_theme_font_size_override("font_size", 28)
+	instructions.add_theme_color_override("font_color", Color(0.3, 0.25, 0.4))
 	start_container.add_child(instructions)
 
 # -------------------- GAME OVER SCREEN --------------------
@@ -141,26 +151,32 @@ func create_game_over_screen():
 	game_over_container.hide()
 	add_child(game_over_container)
 	
-	# Semi-transparent overlay
+	# Purple/lavender background overlay
 	var overlay = ColorRect.new()
-	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.color = Color(0.75, 0.7, 0.82, 0.95)  # Lavender like in image
 	overlay.size = viewport_size
 	game_over_container.add_child(overlay)
 	
-	# Game Over Panel
+	# DRIFTI branding at top
+	var branding = Label.new()
+	branding.text = "DRIFTI"
+	branding.position = Vector2(30, 30)
+	branding.size = Vector2(200, 50)
+	branding.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	branding.add_theme_font_size_override("font_size", 32)
+	branding.add_theme_color_override("font_color", Color(0.6, 0.4, 0.7))  # Purple
+	game_over_container.add_child(branding)
+	
+	# White content panel
 	var panel = Panel.new()
 	panel.name = "GameOverPanel"
-	panel.position = Vector2(viewport_size.x * 0.5 - 300, viewport_size.y * 0.5 - 250)
-	panel.size = Vector2(600, 500)
+	panel.position = Vector2(viewport_size.x * 0.5 - 300, viewport_size.y * 0.5 - 280)
+	panel.size = Vector2(600, 560)
+	panel.clip_contents = true  # Allow mascot to overflow
 	
-	# Add background color to panel
+	# White rounded background
 	var style_box = StyleBoxFlat.new()
-	style_box.bg_color = Color(0.1, 0.1, 0.15, 0.95)
-	style_box.border_color = Color(1, 0.8, 0.2)
-	style_box.border_width_left = 4
-	style_box.border_width_right = 4
-	style_box.border_width_top = 4
-	style_box.border_width_bottom = 4
+	style_box.bg_color = Color(1, 1, 1, 1)  # White
 	style_box.corner_radius_top_left = 20
 	style_box.corner_radius_top_right = 20
 	style_box.corner_radius_bottom_left = 20
@@ -169,85 +185,135 @@ func create_game_over_screen():
 	
 	game_over_container.add_child(panel)
 	
-	# Game Over title
-	var game_over_title = Label.new()
-	game_over_title.text = "GAME OVER"
-	game_over_title.position = Vector2(0, 40)
-	game_over_title.size = Vector2(600, 100)
-	game_over_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	game_over_title.add_theme_font_size_override("font_size", 68)
-	game_over_title.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
-	game_over_title.add_theme_color_override("font_shadow_color", Color(0.5, 0, 0, 0.9))
-	game_over_title.add_theme_constant_override("shadow_offset_x", 4)
-	game_over_title.add_theme_constant_override("shadow_offset_y", 4)
-	game_over_title.add_theme_constant_override("shadow_outline_size", 8)
-	panel.add_child(game_over_title)
+	# Mascot image - positioned at bottom-right, anchored to panel size
+	var mascot = TextureRect.new()
+	mascot.name = "Mascot"
+	var mascot_size = 180
+	mascot.position = Vector2(panel.size.x - mascot_size, panel.size.y - 100 - mascot_size)  # Bottom-right with overflow
+	mascot.size = Vector2(mascot_size, mascot_size)
+	mascot.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	mascot.texture = load("res://assets/maskot3.png")
+	mascot.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Don't block mouse events
+	panel.add_child(mascot)
 	
-	# Score display
-	var score_display = Label.new()
-	score_display.name = "ScoreDisplay"
-	score_display.text = "SCORE: 0"
-	score_display.position = Vector2(0, 160)
-	score_display.size = Vector2(600, 80)
-	score_display.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	score_display.add_theme_font_size_override("font_size", 52)
-	score_display.add_theme_color_override("font_color", Color.WHITE)
-	score_display.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
-	score_display.add_theme_constant_override("shadow_offset_x", 3)
-	score_display.add_theme_constant_override("shadow_offset_y", 3)
-	panel.add_child(score_display)
+	# Score at top
+	var score_top = Label.new()
+	score_top.name = "ScoreTop"
+	score_top.text = "202 poeng"
+	score_top.position = Vector2(0, 30)
+	score_top.size = Vector2(600, 60)
+	score_top.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	score_top.add_theme_font_size_override("font_size", 42)
+	score_top.add_theme_color_override("font_color", Color(0.15, 0.1, 0.25))  # Dark purple/navy
+	panel.add_child(score_top)
 	
-	# Best score display
-	var best_display = Label.new()
-	best_display.name = "BestDisplay"
-	best_display.text = "BEST: 0"
-	best_display.position = Vector2(0, 250)
-	best_display.size = Vector2(600, 60)
-	best_display.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	best_display.add_theme_font_size_override("font_size", 42)
-	best_display.add_theme_color_override("font_color", Color.GOLD)
-	best_display.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
-	best_display.add_theme_constant_override("shadow_offset_x", 2)
-	best_display.add_theme_constant_override("shadow_offset_y", 2)
-	panel.add_child(best_display)
+	# "Å nei!" text
+	var oh_no = Label.new()
+	oh_no.name = "OhNoLabel"
+	oh_no.text = "Å nei!"
+	oh_no.position = Vector2(0, 100)
+	oh_no.size = Vector2(600, 40)
+	oh_no.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	oh_no.add_theme_font_size_override("font_size", 24)
+	oh_no.add_theme_color_override("font_color", Color(0.3, 0.25, 0.35))
+	panel.add_child(oh_no)
 	
-	# Restart button
+	# "Kortslutning!" title
+	var title = Label.new()
+	title.name = "MainTitle"
+	title.text = "Kortslutning!"
+	title.position = Vector2(0, 135)
+	title.size = Vector2(600, 70)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_color_override("font_color", Color(0.15, 0.1, 0.25))  # Dark purple/navy
+	panel.add_child(title)
+	
+	# Description text
+	var desc = RichTextLabel.new()
+	desc.name = "DescriptionLabel"
+	desc.bbcode_enabled = true
+	desc.text = "[center]Du fikk [b]27 poeng[/b] for å sikringsrøk,\nbara [b]3 poeng[/b] fra toppen![/center]"
+	desc.position = Vector2(50, 220)
+	desc.size = Vector2(500, 80)
+	desc.add_theme_font_size_override("normal_font_size", 18)
+	desc.add_theme_font_size_override("bold_font_size", 18)
+	desc.add_theme_color_override("default_color", Color(0.3, 0.25, 0.35))
+	desc.fit_content = true
+	panel.add_child(desc)
+	
+	# "Er du klar for å prøve igjen?" text
+	var ready_text = Label.new()
+	ready_text.text = "Er du klar for å prøve igjen?"
+	ready_text.position = Vector2(0, 320)
+	ready_text.size = Vector2(600, 40)
+	ready_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ready_text.add_theme_font_size_override("font_size", 20)
+	ready_text.add_theme_color_override("font_color", Color(0.3, 0.25, 0.35))
+	panel.add_child(ready_text)
+	
+	# "Prøv igjen" button (purple)
 	var restart_btn = Button.new()
 	restart_btn.name = "RestartButton"
-	restart_btn.text = "PLAY AGAIN"
-	restart_btn.position = Vector2(150, 360)
-	restart_btn.size = Vector2(300, 80)
+	restart_btn.text = "Prøv igjen"
+	restart_btn.position = Vector2(150, 375)
+	restart_btn.size = Vector2(300, 60)
 	
 	var btn_style_normal = StyleBoxFlat.new()
-	btn_style_normal.bg_color = Color(0.2, 0.7, 0.3)
-	btn_style_normal.corner_radius_top_left = 15
-	btn_style_normal.corner_radius_top_right = 15
-	btn_style_normal.corner_radius_bottom_left = 15
-	btn_style_normal.corner_radius_bottom_right = 15
+	btn_style_normal.bg_color = Color(0.5, 0.3, 0.7)  # Purple
+	btn_style_normal.corner_radius_top_left = 30
+	btn_style_normal.corner_radius_top_right = 30
+	btn_style_normal.corner_radius_bottom_left = 30
+	btn_style_normal.corner_radius_bottom_right = 30
 	
 	var btn_style_hover = StyleBoxFlat.new()
-	btn_style_hover.bg_color = Color(0.3, 0.9, 0.4)
-	btn_style_hover.corner_radius_top_left = 15
-	btn_style_hover.corner_radius_top_right = 15
-	btn_style_hover.corner_radius_bottom_left = 15
-	btn_style_hover.corner_radius_bottom_right = 15
+	btn_style_hover.bg_color = Color(0.6, 0.4, 0.8)  # Lighter purple
+	btn_style_hover.corner_radius_top_left = 30
+	btn_style_hover.corner_radius_top_right = 30
+	btn_style_hover.corner_radius_bottom_left = 30
+	btn_style_hover.corner_radius_bottom_right = 30
 	
 	var btn_style_pressed = StyleBoxFlat.new()
-	btn_style_pressed.bg_color = Color(0.15, 0.5, 0.2)
-	btn_style_pressed.corner_radius_top_left = 15
-	btn_style_pressed.corner_radius_top_right = 15
-	btn_style_pressed.corner_radius_bottom_left = 15
-	btn_style_pressed.corner_radius_bottom_right = 15
+	btn_style_pressed.bg_color = Color(0.4, 0.2, 0.6)  # Darker purple
+	btn_style_pressed.corner_radius_top_left = 30
+	btn_style_pressed.corner_radius_top_right = 30
+	btn_style_pressed.corner_radius_bottom_left = 30
+	btn_style_pressed.corner_radius_bottom_right = 30
 	
 	restart_btn.add_theme_stylebox_override("normal", btn_style_normal)
 	restart_btn.add_theme_stylebox_override("hover", btn_style_hover)
 	restart_btn.add_theme_stylebox_override("pressed", btn_style_pressed)
-	restart_btn.add_theme_font_size_override("font_size", 38)
+	restart_btn.add_theme_font_size_override("font_size", 24)
 	restart_btn.add_theme_color_override("font_color", Color.WHITE)
-	restart_btn.add_theme_color_override("font_pressed_color", Color(0.9, 0.9, 0.9))
-	restart_btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
+	restart_btn.add_theme_color_override("font_pressed_color", Color(0.95, 0.95, 0.95))
+	restart_btn.add_theme_color_override("font_hover_color", Color.WHITE)
 	
 	panel.add_child(restart_btn)
+	
+	# "Ny spille" link button
+	var new_game_btn = Button.new()
+	new_game_btn.name = "NewGameButton"
+	new_game_btn.text = "Ny spille"
+	new_game_btn.position = Vector2(220, 450)
+	new_game_btn.size = Vector2(160, 40)
+	
+	var link_style = StyleBoxFlat.new()
+	link_style.bg_color = Color(1, 1, 1, 0)  # Transparent
+	
+	new_game_btn.add_theme_stylebox_override("normal", link_style)
+	new_game_btn.add_theme_stylebox_override("hover", link_style)
+	new_game_btn.add_theme_stylebox_override("pressed", link_style)
+	new_game_btn.add_theme_font_size_override("font_size", 18)
+	new_game_btn.add_theme_color_override("font_color", Color(0.5, 0.3, 0.7))
+	new_game_btn.add_theme_color_override("font_hover_color", Color(0.6, 0.4, 0.8))
+	new_game_btn.add_theme_color_override("font_pressed_color", Color(0.4, 0.2, 0.6))
+	
+	# Connect the button to load start scene
+	new_game_btn.pressed.connect(_on_new_game_pressed)
+	
+	panel.add_child(new_game_btn)
+
+
 
 # -------------------- PARTICLES --------------------
 func create_particles_container():
@@ -309,6 +375,11 @@ func _process(delta: float):
 	else:
 		offset = Vector2.ZERO
 
+# -------------------- BUTTON CALLBACKS --------------------
+func _on_new_game_pressed():
+	# Change to start scene
+	get_tree().change_scene_to_file(start_scene_path)
+
 # -------------------- PUBLIC FUNCTIONS --------------------
 func show_start_screen():
 	start_container.show()
@@ -332,18 +403,15 @@ func hide_start_screen():
 	score_tween.tween_property(score_label, "modulate:a", 1.0, 0.5)
 
 func update_score(new_score: int, player_pos: Vector2):
-	score_label.text = str(new_score)
+	score_label.text = str(new_score) + " poeng"
 	
 	# Popup animation
 	var tween = create_tween()
-	tween.tween_property(score_label, "scale", Vector2(1.4, 1.4), 0.1)
+	tween.tween_property(score_label, "scale", Vector2(1.3, 1.3), 0.1)
 	tween.tween_property(score_label, "scale", Vector2(1.0, 1.0), 0.1)
 	
 	# Spawn particles at player position
 	spawn_score_particles(player_pos)
-	
-	# Small screen shake
-	#add_screen_shake(3)
 
 func update_high_score(new_high_score: int):
 	high_score_label.text = "Best: " + str(new_high_score)
@@ -352,9 +420,6 @@ func show_game_over(final_score: int, best_score: int, player_pos: Vector2, is_n
 	# Death particles
 	spawn_death_particles(player_pos)
 	
-	# Big screen shake
-	#add_screen_shake(15)
-	
 	# Show game over screen with delay
 	await get_tree().create_timer(0.5).timeout
 	
@@ -362,35 +427,72 @@ func show_game_over(final_score: int, best_score: int, player_pos: Vector2, is_n
 	game_over_container.modulate.a = 0
 	
 	var panel = game_over_container.get_node("GameOverPanel")
-	panel.scale = Vector2(0.5, 0.5)
+	if panel == null:
+		print("ERROR: GameOverPanel not found!")
+		return
+		
+	panel.scale = Vector2(0.8, 0.8)
+	panel.position.y += 50
 	
 	# Animate in
 	var tween = create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(game_over_container, "modulate:a", 1.0, 0.3)
 	tween.tween_property(panel, "scale", Vector2(1.0, 1.0), 0.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(panel, "position:y", panel.position.y - 50, 0.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 	
-	# Update text
-	var score_display = panel.get_node("ScoreDisplay")
-	var best_display = panel.get_node("BestDisplay")
+	# Update mascot image based on new record
+	var mascot = panel.get_node("Mascot") as TextureRect
+	if mascot:
+		if is_new_record:
+			mascot.texture = load("res://assets/maskot4.png")
+		else:
+			mascot.texture = load("res://assets/maskot3.png")
 	
-	if is_new_record:
-		score_display.text = "NEW RECORD!"
-		score_display.add_theme_color_override("font_color", Color.GOLD)
-		
-		# Celebrate animation
-		var celebrate_tween = create_tween().set_loops()
-		celebrate_tween.tween_property(score_display, "scale", Vector2(1.1, 1.1), 0.5)
-		celebrate_tween.tween_property(score_display, "scale", Vector2(1.0, 1.0), 0.5)
-	else:
-		score_display.text = "SCORE: " + str(final_score)
-		score_display.add_theme_color_override("font_color", Color.WHITE)
+	# Update score text at top (hide it for new record)
+	var score_top = panel.get_node("ScoreTop")
+	if score_top:
+		if is_new_record:
+			score_top.hide()
+		else:
+			score_top.show()
+			score_top.text = str(final_score) + " poeng"
 	
-	best_display.text = "BEST: " + str(best_score)
+	# Update title based on new record
+	var title = panel.get_node("MainTitle") as Label
+	if title:
+		if is_new_record:
+			title.text = "Ny rekord!"
+		else:
+			title.text = "Kortslutning!"
+	
+	# Update "Å nei!" text (hide it for new record)
+	var oh_no = panel.get_node("OhNoLabel") as Label
+	if oh_no:
+		if is_new_record:
+			oh_no.hide()
+		else:
+			oh_no.show()
+	
+	# Update description with dynamic values
+	var points_from_top = abs(best_score - final_score)
+	var desc = panel.get_node("DescriptionLabel") as RichTextLabel
+	if desc:
+		if is_new_record:
+			desc.text = "[center]Du leder strømmen med hele\n[b]" + str(final_score) + " poeng[/b]![/center]"
+		else:
+			desc.text = "[center]Du fikk [b]" + str(final_score) + " poeng[/b] før sikringsrøk,\nbara [b]" + str(points_from_top) + " poeng[/b] fra toppen![/center]"
 
 func get_restart_button() -> Button:
 	if game_over_container:
 		var panel = game_over_container.get_node("GameOverPanel")
 		if panel:
 			return panel.get_node("RestartButton")
+	return null
+
+func get_new_game_button() -> Button:
+	if game_over_container:
+		var panel = game_over_container.get_node("GameOverPanel")
+		if panel:
+			return panel.get_node("NewGameButton")
 	return null

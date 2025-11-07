@@ -411,6 +411,11 @@ offset_right = 8.0
 offset_bottom = 8.0
 text = "Restart"
 
+[node name="DescriptionLabel" type="RichTextLabel" parent="UI/GameOverPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
 [node name="StartLabel" type="Label" parent="UI"]
 offset_right = 103.0
 offset_bottom = 23.0
