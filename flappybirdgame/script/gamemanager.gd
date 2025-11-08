@@ -128,6 +128,7 @@ const DIFFICULTY_UPDATE_INTERVAL: float = 0.5
 var cached_half_rotation_speed: float
 var deletion_x_threshold: float
 
+
 # -------------------- INITIALIZATION --------------------
 func _ready():
 	if not validate_nodes():
@@ -490,8 +491,7 @@ func create_fixed_pipe(is_top: bool, gap_center_y: float) -> Node2D:
 	# Setup lightning cable endpoints
 	if lightning and lightning.has_method("setup_cable"):
 		lightning.call_deferred("setup_cable", cable_start, cable_end, is_top)
-		print("Setting up lightning - IsTop: ", is_top, " Start: ", cable_start, " End: ", cable_end)
-	
+
 	return pipe_instance
 
 
@@ -601,6 +601,7 @@ func game_over():
 			final_score_label.text = "BEST SCORE!\n " + str(score)
 		else:
 			final_score_label.text = "Score: " + str(score) + "\nBest: " + str(high_score)
+			
 
 func restart_game():
 	# OPTIMIZED CLEANUP - Process in background

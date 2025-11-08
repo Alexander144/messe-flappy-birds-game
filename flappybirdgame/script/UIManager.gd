@@ -7,6 +7,7 @@ var high_score_label: Label
 var start_container: Control
 var game_over_container: Control
 var game_manager: Node
+var highest_score: float = 0
 
 # -------------------- VISUAL EFFECTS --------------------
 var screen_shake_amount: float = 0.0
@@ -57,7 +58,8 @@ func create_score_ui():
 	# High score label (top right)
 	high_score_label = Label.new()
 	high_score_label.name = "HighScoreLabel"
-	high_score_label.text = "Best: 0"
+	var l = UserData.get_highest_score()
+	high_score_label.text = "Best: " + str(int(l))
 	high_score_label.position = Vector2(get_viewport().get_visible_rect().size.x - 250, 30)
 	high_score_label.size = Vector2(230, 50)
 	high_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -290,10 +292,10 @@ func create_game_over_screen():
 	
 	panel.add_child(restart_btn)
 	
-	# "Ny spille" link button
+	# "Ny spiller" link button
 	var new_game_btn = Button.new()
 	new_game_btn.name = "NewGameButton"
-	new_game_btn.text = "Ny spille"
+	new_game_btn.text = "Ny spiller"
 	new_game_btn.position = Vector2(220, 450)
 	new_game_btn.size = Vector2(160, 40)
 	
@@ -378,6 +380,10 @@ func _process(delta: float):
 # -------------------- BUTTON CALLBACKS --------------------
 func _on_new_game_pressed():
 	# Change to start scene
+	var user_data = UserData.get_user_data()
+	
+	# Push to Firebase with user data and initial points
+	await UserData.push_score_to_firebase(highest_score)
 	get_tree().change_scene_to_file(start_scene_path)
 
 # -------------------- PUBLIC FUNCTIONS --------------------
@@ -403,6 +409,8 @@ func hide_start_screen():
 	score_tween.tween_property(score_label, "modulate:a", 1.0, 0.5)
 
 func update_score(new_score: int, player_pos: Vector2):
+	if new_score > highest_score:
+		highest_score = new_score
 	score_label.text = str(new_score) + " poeng"
 	
 	# Popup animation
@@ -414,7 +422,9 @@ func update_score(new_score: int, player_pos: Vector2):
 	spawn_score_particles(player_pos)
 
 func update_high_score(new_high_score: int):
-	high_score_label.text = "Best: " + str(new_high_score)
+	var l = UserData.get_highest_score()
+	if new_high_score > l:
+		high_score_label.text = "Best: " + str(new_high_score)
 
 func show_game_over(final_score: int, best_score: int, player_pos: Vector2, is_new_record: bool):
 	# Death particles

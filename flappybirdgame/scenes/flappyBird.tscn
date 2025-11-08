@@ -1,15 +1,16 @@
-[gd_scene load_steps=45 format=3 uid="uid://bxl56x6s2bx7i"]
+[gd_scene load_steps=46 format=3 uid="uid://bxl56x6s2bx7i"]
 
 [ext_resource type="Script" uid="uid://u1j0f17l2qns" path="res://script/gamemanager.gd" id="1_cb5m5"]
 [ext_resource type="Texture2D" uid="uid://b5wnhf7ybytch" path="res://assets/background.png" id="3_2n0tp"]
 [ext_resource type="Texture2D" uid="uid://d221ffvqlbakq" path="res://assets/maskot.png" id="4_2n0tp"]
 [ext_resource type="PackedScene" uid="uid://1cjd8qwd4n8t" path="res://objects/ror.tscn" id="4_j0dff"]
 [ext_resource type="Script" uid="uid://cnqxnxhs33oc1" path="res://script/UIManager.gd" id="5_2n0tp"]
+[ext_resource type="Script" uid="uid://r0sbu5khl3a2" path="res://script/parallax_background.gd" id="5_lyqxv"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_oqtid"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_cb5m5"]
-size = Vector2(237.037, 474.075)
+size = Vector2(181.482, 388.889)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2n0tp"]
 atlas = ExtResource("4_2n0tp")
@@ -273,17 +274,6 @@ animations = [{
 
 [node name="root" type="Node2D"]
 
-[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
-visible = false
-scroll_ignore_camera_zoom = true
-
-[node name="ParallaxLayer" type="ParallaxLayer" parent="ParallaxBackground"]
-motion_scale = Vector2(0, 0)
-motion_mirroring = Vector2(1920, 0)
-
-[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/ParallaxLayer"]
-texture = ExtResource("3_2n0tp")
-
 [node name="GameManager" type="Node" parent="." node_paths=PackedStringArray("camera", "player", "player_sprite", "player_collision", "pipe_container", "parallax_background", "parallax_layer", "background_sprite", "ui_layer", "score_label", "high_score_label", "start_label", "tap_hint", "game_over_panel", "game_over_label", "final_score_label", "restart_button")]
 script = ExtResource("1_cb5m5")
 camera = NodePath("../Camera2D")
@@ -318,6 +308,7 @@ gap_size_min = 190.0
 
 [node name="CanvasLayer" type="CanvasLayer" parent="Camera2D"]
 layer = -1
+visible = false
 
 [node name="Control" type="Control" parent="Camera2D/CanvasLayer"]
 layout_mode = 3
@@ -340,6 +331,18 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.980392, 0.972549, 0.968627, 1)
 
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+scroll_ignore_camera_zoom = true
+script = ExtResource("5_lyqxv")
+scroll_speed = 50.0
+
+[node name="ParallaxLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0, 0)
+motion_mirroring = Vector2(8081, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/ParallaxLayer"]
+texture = ExtResource("3_2n0tp")
+
 [node name="Ground" type="Node2D" parent="."]
 
 [node name="GroundBody" type="StaticBody2D" parent="Ground"]
@@ -359,13 +362,13 @@ shape = SubResource("RectangleShape2D_oqtid")
 scale = Vector2(0.27, 0.27)
 
 [node name="PlayerCollision" type="CollisionShape2D" parent="Player"]
-position = Vector2(-88.8889, 51.8518)
+position = Vector2(-72.2222, 94.4444)
 scale = Vector2(0.999999, 0.999999)
 shape = SubResource("RectangleShape2D_cb5m5")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Player"]
-position = Vector2(-118.519, 48.1481)
-scale = Vector2(2.29594, 2.41005)
+position = Vector2(-103.704, 96.2963)
+scale = Vector2(1.88871, 1.98258)
 sprite_frames = SubResource("SpriteFrames_x1tax")
 frame_progress = 0.502761
 speed_scale = 2.0

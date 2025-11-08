@@ -1,7 +1,8 @@
-[gd_scene load_steps=8 format=3 uid="uid://g1jdolrs4lwu"]
+[gd_scene load_steps=9 format=3 uid="uid://g1jdolrs4lwu"]
 
 [ext_resource type="Texture2D" uid="uid://xt6ohrb2my5m" path="res://assets/Logo.png" id="1_kdmts"]
 [ext_resource type="Texture2D" uid="uid://d00oamac86tvl" path="res://assets/maskot2.png" id="2_0auqf"]
+[ext_resource type="Script" uid="uid://p2wd1fm1h6o1" path="res://script/register.gd" id="3_8itgj"]
 [ext_resource type="Texture2D" uid="uid://f7rivurpwsbm" path="res://assets/text1.png" id="3_y16t7"]
 [ext_resource type="Texture2D" uid="uid://bhrjuchtrivgh" path="res://assets/text2.png" id="4_4ge6i"]
 [ext_resource type="Script" uid="uid://c4s08sic53t1i" path="res://script/start_game.gd" id="5_0auqf"]
@@ -68,7 +69,7 @@ theme_override_constants/margin_top = 20
 layout_mode = 2
 texture = ExtResource("1_kdmts")
 
-[node name="Control" type="Control" parent="Register/Control"]
+[node name="Control" type="Control" parent="Register/Control" node_paths=PackedStringArray("navn_field", "mail_field", "bedrift_navn_field", "tlf_field", "button")]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -78,6 +79,12 @@ offset_bottom = 650.0
 grow_horizontal = 2
 scale = Vector2(1.29, 1.29)
 size_flags_vertical = 4
+script = ExtResource("3_8itgj")
+navn_field = NodePath("MarginContainer/HBoxContainer/VBoxContainer/Navn")
+mail_field = NodePath("MarginContainer/HBoxContainer/VBoxContainer/Mail")
+bedrift_navn_field = NodePath("MarginContainer/HBoxContainer/VBoxContainer/BedriftNavn")
+tlf_field = NodePath("MarginContainer/HBoxContainer/VBoxContainer/Tlf")
+button = NodePath("MarginContainer/HBoxContainer/VBoxContainer/MarginContainer/Button")
 
 [node name="MarginContainer" type="MarginContainer" parent="Register/Control/Control"]
 layout_mode = 1
@@ -211,9 +218,16 @@ theme_override_constants/margin_right = 100
 [node name="Button" type="Button" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer/MarginContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
+theme_override_styles/focus = ExtResource("5_y16t7")
+theme_override_styles/disabled_mirrored = ExtResource("5_y16t7")
+theme_override_styles/disabled = ExtResource("5_y16t7")
+theme_override_styles/hover_pressed_mirrored = ExtResource("5_y16t7")
+theme_override_styles/hover_pressed = ExtResource("5_y16t7")
+theme_override_styles/hover_mirrored = ExtResource("5_y16t7")
 theme_override_styles/hover = ExtResource("5_y16t7")
+theme_override_styles/pressed_mirrored = ExtResource("5_y16t7")
+theme_override_styles/pressed = ExtResource("5_y16t7")
+theme_override_styles/normal_mirrored = ExtResource("5_y16t7")
 theme_override_styles/normal = ExtResource("5_y16t7")
 text = "Start spillet"
 script = ExtResource("5_0auqf")
-
-[connection signal="pressed" from="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer/MarginContainer/Button" to="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer/MarginContainer/Button" method="_on_pressed"]

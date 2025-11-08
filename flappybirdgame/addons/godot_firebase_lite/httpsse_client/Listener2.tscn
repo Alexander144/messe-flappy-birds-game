@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c0t0ysmy5c88f"]
+
+[ext_resource type="Script" path="res://addons/godot_firebase_lite/httpsse_client/HTTPSSEClient2.gd" id="1_vpk8v"]
+
+[node name="Listener" type="Node"]
+script = ExtResource("1_vpk8v")

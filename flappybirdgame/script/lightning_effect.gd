@@ -57,7 +57,6 @@ func setup_cable(start_pos: Vector2, end_pos: Vector2, is_top: bool = false):
 	cable_start = start_pos
 	cable_end = end_pos
 	is_top_pipe = is_top
-	print("Lightning setup - Start: ", cable_start, " End: ", cable_end, " IsTop: ", is_top)
 
 func update_x_position(new_x: float):
 	x_offset = new_x

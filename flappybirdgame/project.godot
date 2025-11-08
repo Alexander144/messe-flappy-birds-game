@@ -15,12 +15,21 @@ run/main_scene="uid://g1jdolrs4lwu"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+FirebaseLite="*res://addons/godot_firebase_lite/firebase.tscn"
+UserData="*res://script/user_data.gd"
+
 [display]
 
 window/stretch/mode="viewport"
 window/stretch/aspect="keep_width"
 window/handheld/orientation=1
 window/vsync/vsync_mode=2
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_firebase_lite/plugin.cfg")
 
 [input]
 
