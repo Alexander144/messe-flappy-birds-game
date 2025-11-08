@@ -9,7 +9,6 @@ var phone: String = ""
 
 var highestScore: float = 0.0
 
-const API_SECRET = "k9mP2xL7nQ4vB8wR6tY3hJ5zF1gK0sD9cX7eN2aM4pU8qW6iO3rT5yH1jV0bL9"
 
 var firebase_config = {
   "apiKey": "AIzaSyAtIfN5IwWv2wGksqp8W8hWQrVK0tbFQB0",
