@@ -1,9 +1,9 @@
 extends Control
 
-@export var navn_field: TextEdit
-@export var mail_field: TextEdit
-@export var bedrift_navn_field: TextEdit
-@export var tlf_field: TextEdit
+@export var navn_field: LineEdit
+@export var mail_field: LineEdit
+@export var bedrift_navn_field: LineEdit
+@export var tlf_field: LineEdit
 @export var button: Button
 
 var error_label: Label

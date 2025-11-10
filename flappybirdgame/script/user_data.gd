@@ -8,7 +8,7 @@ var company: String = ""
 var phone: String = ""
 
 var highestScore: float = 0.0
-
+var yourHighestScore: float = 0.0
 
 var firebase_config = {
   "apiKey": "AIzaSyAtIfN5IwWv2wGksqp8W8hWQrVK0tbFQB0",
@@ -20,6 +20,25 @@ var firebase_config = {
   "appId": "1:339716507471:web:fb0734a02440872334273a",
   "measurementId": "G-GF92G9J5X7"
 };
+	
+func get_highest_score() -> float:
+	return highestScore
+	
+func get_your_highest_score() -> float:
+	return yourHighestScore
+
+func get_user_data() -> Dictionary:
+	return {
+		"username": username,
+		"email": email,
+		"company": company,
+		"phone": phone
+	}
+
+func clear_user_data() -> void:
+	username = ""
+	email = ""
+	company = ""
 
 var database: RealtimeDatabase
 var auth: Authentication
@@ -43,24 +62,8 @@ func set_user_data(p_username: String, p_email: String, p_company: String, p_pho
 	company = p_company
 	phone = p_phone
 	
-func setHighScore(p_highscore: float):
-	highestScore = p_highscore
-	
-func get_highest_score() -> float:
-	return highestScore
-
-func get_user_data() -> Dictionary:
-	return {
-		"username": username,
-		"email": email,
-		"company": company,
-		"phone": phone
-	}
-
-func clear_user_data() -> void:
-	username = ""
-	email = ""
-	company = ""
+func setYourHighScore(p_highscore: float):
+	yourHighestScore = p_highscore
 	phone = ""
 	
 func set_highest_score() -> void:

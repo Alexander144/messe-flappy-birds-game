@@ -587,11 +587,10 @@ func start_game():
 func game_over():
 	is_game_over = true
 	
-	var is_new_record = score > high_score
+	var is_new_record = score > UserData.highestScore
 	if is_new_record:
 		high_score = score
-		UserData.setHighScore(score)
-	ui_manager.update_high_score(score)
+		UserData.setYourHighScore(score)
 	if use_cool_ui and ui_manager:
 		ui_manager.show_game_over(score, high_score, player.position, is_new_record)
 	else:

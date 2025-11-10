@@ -485,7 +485,7 @@ func show_game_over(final_score: int, best_score: int, player_pos: Vector2, is_n
 			oh_no.show()
 	
 	# Update description with dynamic values
-	var points_from_top = abs(best_score - final_score)
+	var points_from_top = abs(final_score - int(UserData.get_highest_score()))
 	var desc = panel.get_node("DescriptionLabel") as RichTextLabel
 	if desc:
 		if is_new_record:

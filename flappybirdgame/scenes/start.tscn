@@ -83,7 +83,7 @@ script = ExtResource("3_8itgj")
 navn_field = NodePath("MarginContainer/HBoxContainer/VBoxContainer/Navn")
 mail_field = NodePath("MarginContainer/HBoxContainer/VBoxContainer/Mail")
 bedrift_navn_field = NodePath("MarginContainer/HBoxContainer/VBoxContainer/BedriftNavn")
-tlf_field = NodePath("MarginContainer/HBoxContainer/VBoxContainer/Tlf")
+tlf_field = NodePath("MarginContainer/HBoxContainer/VBoxContainer/Telefonnummer")
 button = NodePath("MarginContainer/HBoxContainer/VBoxContainer/MarginContainer/Button")
 
 [node name="MarginContainer" type="MarginContainer" parent="Register/Control/Control"]
@@ -114,101 +114,71 @@ texture = ExtResource("3_y16t7")
 layout_mode = 2
 texture = ExtResource("4_4ge6i")
 
-[node name="BedriftNavn" type="TextEdit" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="BedriftNavn" type="LineEdit" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/word_highlighted_color = Color(0, 0, 0, 1)
-theme_override_colors/current_line_color = Color(0, 0, 0, 1)
-theme_override_colors/background_color = Color(0.94902, 0.937255, 0.937255, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_colors/font_placeholder_color = Color(0.403922, 0.396078, 0.462745, 1)
-theme_override_colors/font_readonly_color = Color(0, 0, 0, 1)
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/clear_button_color_pressed = Color(0, 0, 0, 1)
+theme_override_colors/clear_button_color = Color(0, 0, 0, 1)
 theme_override_colors/selection_color = Color(0, 0, 0, 1)
-theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
-theme_override_colors/caret_background_color = Color(0, 0, 0, 1)
 theme_override_colors/caret_color = Color(0, 0, 0, 1)
-theme_override_colors/search_result_border_color = Color(0, 0, 0, 1)
-theme_override_colors/search_result_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 20
-theme_override_styles/normal = ExtResource("5_4ge6i")
+theme_override_colors/font_placeholder_color = Color(0.290354, 0.290354, 0.290353, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
+theme_override_colors/font_uneditable_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_styles/focus = ExtResource("5_4ge6i")
 theme_override_styles/read_only = ExtResource("5_4ge6i")
+theme_override_styles/normal = ExtResource("5_4ge6i")
 placeholder_text = "Bedriftsnavn"
-emoji_menu_enabled = false
-scroll_fit_content_height = true
-caret_blink = true
 
-[node name="Navn" type="TextEdit" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="Navn" type="LineEdit" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/word_highlighted_color = Color(0, 0, 0, 1)
-theme_override_colors/current_line_color = Color(0, 0, 0, 1)
-theme_override_colors/background_color = Color(0.94902, 0.937255, 0.937255, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_colors/font_placeholder_color = Color(0.403922, 0.396078, 0.462745, 1)
-theme_override_colors/font_readonly_color = Color(0, 0, 0, 1)
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/clear_button_color_pressed = Color(0, 0, 0, 1)
+theme_override_colors/clear_button_color = Color(0, 0, 0, 1)
 theme_override_colors/selection_color = Color(0, 0, 0, 1)
-theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
-theme_override_colors/caret_background_color = Color(0, 0, 0, 1)
 theme_override_colors/caret_color = Color(0, 0, 0, 1)
-theme_override_colors/search_result_border_color = Color(0, 0, 0, 1)
-theme_override_colors/search_result_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 20
-theme_override_styles/normal = ExtResource("5_4ge6i")
+theme_override_colors/font_placeholder_color = Color(0.290196, 0.290196, 0.290196, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
+theme_override_colors/font_uneditable_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_styles/focus = ExtResource("5_4ge6i")
 theme_override_styles/read_only = ExtResource("5_4ge6i")
+theme_override_styles/normal = ExtResource("5_4ge6i")
 placeholder_text = "Navn"
-emoji_menu_enabled = false
-scroll_fit_content_height = true
-caret_blink = true
 
-[node name="Mail" type="TextEdit" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="Mail" type="LineEdit" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/word_highlighted_color = Color(0, 0, 0, 1)
-theme_override_colors/current_line_color = Color(0, 0, 0, 1)
-theme_override_colors/background_color = Color(0.94902, 0.937255, 0.937255, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_colors/font_placeholder_color = Color(0.403922, 0.396078, 0.462745, 1)
-theme_override_colors/font_readonly_color = Color(0, 0, 0, 1)
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/clear_button_color_pressed = Color(0, 0, 0, 1)
+theme_override_colors/clear_button_color = Color(0, 0, 0, 1)
 theme_override_colors/selection_color = Color(0, 0, 0, 1)
-theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
-theme_override_colors/caret_background_color = Color(0, 0, 0, 1)
 theme_override_colors/caret_color = Color(0, 0, 0, 1)
-theme_override_colors/search_result_border_color = Color(0, 0, 0, 1)
-theme_override_colors/search_result_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 20
-theme_override_styles/normal = ExtResource("5_4ge6i")
+theme_override_colors/font_placeholder_color = Color(0.290196, 0.290196, 0.290196, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
+theme_override_colors/font_uneditable_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_styles/focus = ExtResource("5_4ge6i")
 theme_override_styles/read_only = ExtResource("5_4ge6i")
+theme_override_styles/normal = ExtResource("5_4ge6i")
 placeholder_text = "Epost"
-emoji_menu_enabled = false
-scroll_fit_content_height = true
-caret_blink = true
+virtual_keyboard_type = 5
 
-[node name="Tlf" type="TextEdit" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="Telefonnummer" type="LineEdit" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/word_highlighted_color = Color(0, 0, 0, 1)
-theme_override_colors/current_line_color = Color(0, 0, 0, 1)
-theme_override_colors/background_color = Color(0.94902, 0.937255, 0.937255, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_colors/font_placeholder_color = Color(0.403922, 0.396078, 0.462745, 1)
-theme_override_colors/font_readonly_color = Color(0, 0, 0, 1)
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/clear_button_color_pressed = Color(0, 0, 0, 1)
+theme_override_colors/clear_button_color = Color(0, 0, 0, 1)
 theme_override_colors/selection_color = Color(0, 0, 0, 1)
-theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
-theme_override_colors/caret_background_color = Color(0, 0, 0, 1)
 theme_override_colors/caret_color = Color(0, 0, 0, 1)
-theme_override_colors/search_result_border_color = Color(0, 0, 0, 1)
-theme_override_colors/search_result_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 20
-theme_override_styles/normal = ExtResource("5_4ge6i")
+theme_override_colors/font_placeholder_color = Color(0.290196, 0.290196, 0.290196, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
+theme_override_colors/font_uneditable_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_styles/focus = ExtResource("5_4ge6i")
 theme_override_styles/read_only = ExtResource("5_4ge6i")
+theme_override_styles/normal = ExtResource("5_4ge6i")
 placeholder_text = "Telefonnummer"
-emoji_menu_enabled = false
-scroll_fit_content_height = true
-caret_blink = true
+virtual_keyboard_type = 4
 
 [node name="MarginContainer" type="MarginContainer" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2

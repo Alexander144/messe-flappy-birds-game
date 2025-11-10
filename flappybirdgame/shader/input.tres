@@ -1,8 +1,10 @@
 [gd_resource type="StyleBoxFlat" format=3 uid="uid://dg845budiyvvc"]
 
 [resource]
-border_width_left = 20
-border_width_bottom = 5
+bg_color = Color(0.8, 0.8, 0.8, 1)
+border_width_left = 15
+border_width_top = 7
+border_width_bottom = 6
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
