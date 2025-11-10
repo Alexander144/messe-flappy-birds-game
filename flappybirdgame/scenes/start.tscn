@@ -178,7 +178,7 @@ theme_override_styles/focus = ExtResource("5_4ge6i")
 theme_override_styles/read_only = ExtResource("5_4ge6i")
 theme_override_styles/normal = ExtResource("5_4ge6i")
 placeholder_text = "Telefonnummer"
-virtual_keyboard_type = 4
+alignment = 3
 
 [node name="MarginContainer" type="MarginContainer" parent="Register/Control/Control/MarginContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
