@@ -43,6 +43,9 @@ func set_user_data(p_username: String, p_email: String, p_company: String, p_pho
 	company = p_company
 	phone = p_phone
 	
+func setHighScore(p_highscore: float):
+	highestScore = p_highscore
+	
 func get_highest_score() -> float:
 	return highestScore
 

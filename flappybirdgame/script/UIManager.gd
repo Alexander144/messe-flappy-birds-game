@@ -367,15 +367,16 @@ func spawn_death_particles(position: Vector2):
 func add_screen_shake(amount: float):
 	screen_shake_amount = min(screen_shake_amount + amount, max_shake)
 
-func _process(delta: float):
-	if screen_shake_amount > 0:
-		screen_shake_amount = max(screen_shake_amount - shake_decay * delta, 0)
-		offset = Vector2(
-			randf_range(-screen_shake_amount, screen_shake_amount),
-			randf_range(-screen_shake_amount, screen_shake_amount)
-		)
-	else:
-		offset = Vector2.ZERO
+#func _process(delta: float):
+
+#	if screen_shake_amount > 0:
+#		screen_shake_amount = max(screen_shake_amount - shake_decay * delta, 0)
+#		offset = Vector2(
+#			randf_range(-screen_shake_amount, screen_shake_amount),
+#			randf_range(-screen_shake_amount, screen_shake_amount)
+#		)
+#	else:
+#		offset = Vector2.ZERO
 
 # -------------------- BUTTON CALLBACKS --------------------
 func _on_new_game_pressed():
@@ -423,8 +424,7 @@ func update_score(new_score: int, player_pos: Vector2):
 
 func update_high_score(new_high_score: int):
 	var l = UserData.get_highest_score()
-	if new_high_score > l:
-		high_score_label.text = "Best: " + str(new_high_score)
+	high_score_label.text = "Best: " + str(int(l))
 
 func show_game_over(final_score: int, best_score: int, player_pos: Vector2, is_new_record: bool):
 	# Death particles

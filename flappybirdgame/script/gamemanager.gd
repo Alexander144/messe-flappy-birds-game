@@ -590,10 +590,10 @@ func game_over():
 	var is_new_record = score > high_score
 	if is_new_record:
 		high_score = score
-	
+		UserData.setHighScore(score)
+	ui_manager.update_high_score(score)
 	if use_cool_ui and ui_manager:
 		ui_manager.show_game_over(score, high_score, player.position, is_new_record)
-		ui_manager.update_high_score(high_score)
 	else:
 		game_over_panel.visible = true
 		if is_new_record:
@@ -604,6 +604,7 @@ func game_over():
 			
 
 func restart_game():
+	ui_manager.update_high_score(UserData.get_highest_score())
 	# OPTIMIZED CLEANUP - Process in background
 	if pipe_container:
 		# Get all children at once
@@ -654,7 +655,7 @@ func reset_game():
 	if use_cool_ui and ui_manager:
 		ui_manager.show_start_screen()
 		ui_manager.update_score(0, player.position)
-		ui_manager.update_high_score(high_score)
+		ui_manager.update_high_score(UserData.get_highest_score())
 	else:
 		if not show_debug_info:
 			score_label.text = "0"
