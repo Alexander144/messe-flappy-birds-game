@@ -1,6 +1,6 @@
 [gd_scene load_steps=10 format=3 uid="uid://g1jdolrs4lwu"]
 
-[ext_resource type="Texture2D" uid="uid://xt6ohrb2my5m" path="res://assets/Logo.png" id="1_kdmts"]
+[ext_resource type="Texture2D" uid="uid://dqs65f2aoqahq" path="res://assets/Logo.png" id="1_kdmts"]
 [ext_resource type="Texture2D" uid="uid://d00oamac86tvl" path="res://assets/maskot2.png" id="2_0auqf"]
 [ext_resource type="Script" uid="uid://p2wd1fm1h6o1" path="res://script/register.gd" id="3_8itgj"]
 [ext_resource type="Texture2D" uid="uid://f7rivurpwsbm" path="res://assets/text1.png" id="3_y16t7"]
@@ -67,7 +67,7 @@ texture = ExtResource("2_0auqf")
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
-scale = Vector2(2.52, 2.52)
+scale = Vector2(1.26, 1.26)
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="Register/Control/VBoxContainer"]
 layout_mode = 2

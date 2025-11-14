@@ -2,8 +2,9 @@ extends CanvasLayer
 class_name UIManager
 
 # -------------------- REFERENCES --------------------
-var score_label: Label
-var high_score_label: Label
+var bottom_score_container: Control
+var bottom_score_label: Label
+var bottom_best_label: Label
 var start_container: Control
 var game_over_container: Control
 var game_manager: Node
@@ -19,7 +20,7 @@ var combo_timer: float = 0.0
 @export var shake_decay: float = 5.0
 @export var max_shake: float = 20.0
 @export var combo_timeout: float = 2.0
-@export var start_scene_path: String = "res://scenes/start.tscn"  # Adjust path as needed
+@export var start_scene_path: String = "res://scenes/start.tscn"
 
 func _ready():
 	setup_ui()
@@ -27,53 +28,89 @@ func _ready():
 	
 func setup_ui():
 	# Create main containers
-	create_score_ui()
+	create_bottom_score_ui()
 	create_start_screen()
 	create_game_over_screen()
 	create_particles_container()
 
-# -------------------- SCORE UI --------------------
-func create_score_ui():
-	# Score label with shadow effect
-	score_label = Label.new()
-	score_label.name = "ScoreLabel"
-	score_label.text = "0 poeng"
-	score_label.position = Vector2(0, 80)
-	score_label.size = Vector2(get_viewport().get_visible_rect().size.x, 120)
-	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	score_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+# -------------------- BOTTOM SCORE UI --------------------
+func create_bottom_score_ui():
+	var viewport_size = get_viewport().get_visible_rect().size
 	
-	# Create custom font settings
-	var font_size = 72
-	score_label.add_theme_font_size_override("font_size", font_size)
-	score_label.add_theme_color_override("font_color", Color.WHITE)
-	score_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
-	score_label.add_theme_constant_override("shadow_offset_x", 4)
-	score_label.add_theme_constant_override("shadow_offset_y", 4)
-	score_label.add_theme_constant_override("shadow_outline_size", 8)
-	score_label.pivot_offset = score_label.get_size() / 2
+	# Container for bottom score display
+	bottom_score_container = Control.new()
+	bottom_score_container.name = "BottomScoreContainer"
+	bottom_score_container.size = Vector2(300, 100)
+	add_child(bottom_score_container)
 	
-	add_child(score_label)
-	score_label.hide()
+	# Background with rounded corners
+	var bg = Panel.new()
+	bg.size = Vector2(220, 70)
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.91, 0.95, 0.71)  # Light yellow-green
+	style_box.corner_radius_top_left = 35
+	style_box.corner_radius_top_right = 35
+	style_box.corner_radius_bottom_left = 35
+	style_box.corner_radius_bottom_right = 35
+	bg.add_theme_stylebox_override("panel", style_box)
+	bottom_score_container.add_child(bg)
 	
-	# High score label (top right)
-	high_score_label = Label.new()
-	high_score_label.name = "HighScoreLabel"
-	var l = UserData.get_highest_score()
-	high_score_label.text = "Best: " + str(int(l))
-	high_score_label.position = Vector2(get_viewport().get_visible_rect().size.x - 250, 30)
-	high_score_label.size = Vector2(230, 50)
-	high_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	# Pink star icon using Polygon2D for a proper 5-pointed star
+	var star_container = Node2D.new()
+	star_container.position = Vector2(32, 32)
+	bottom_score_container.add_child(star_container)
 	
-	high_score_label.add_theme_font_size_override("font_size", 32)
-	high_score_label.add_theme_color_override("font_color", Color.GOLD)
-	high_score_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
-	high_score_label.add_theme_constant_override("shadow_offset_x", 2)
-	high_score_label.add_theme_constant_override("shadow_offset_y", 2)
-	high_score_label.add_theme_constant_override("shadow_outline_size", 4)
+	# Create a 5-pointed star polygon
+	var star = Polygon2D.new()
+	var star_points = PackedVector2Array()
+	var outer_radius = 18.0
+	var inner_radius = 7.0
 	
-	add_child(high_score_label)
-	high_score_label.hide()
+	# Generate 5-pointed star points
+	for i in range(10):
+		var angle = (PI * 2 * i / 10) - PI / 2  # Start from top
+		var radius = outer_radius if i % 2 == 0 else inner_radius
+		star_points.append(Vector2(
+			cos(angle) * radius,
+			sin(angle) * radius
+		))
+	
+	star.polygon = star_points
+	star.color = Color(0.95, 0.4, 0.7)  # Pink color
+	star_container.add_child(star)
+	
+	# Score text (main number)
+	bottom_score_label = Label.new()
+	bottom_score_label.name = "BottomScoreLabel"
+	bottom_score_label.text = "0 poeng"
+	bottom_score_label.position = Vector2(60, 5)
+	bottom_score_label.size = Vector2(150, 35)
+	bottom_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	bottom_score_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	bottom_score_label.add_theme_font_size_override("font_size", 28)
+	bottom_score_label.add_theme_color_override("font_color", Color(0.15, 0.1, 0.25))
+	bottom_score_container.add_child(bottom_score_label)
+	
+	# Best score text (smaller, below)
+	bottom_best_label = Label.new()
+	bottom_best_label.name = "BottomBestLabel"
+	var best_score = UserData.get_highest_score()
+	bottom_best_label.text = "Best " + str(int(best_score)) + " poeng"
+	bottom_best_label.position = Vector2(60, 35)
+	bottom_best_label.size = Vector2(150, 25)
+	bottom_best_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	bottom_best_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	bottom_best_label.add_theme_font_size_override("font_size", 16)
+	bottom_best_label.add_theme_color_override("font_color", Color(0.4, 0.35, 0.45))
+	bottom_score_container.add_child(bottom_best_label)
+	
+	# Center the container at bottom of screen
+	bottom_score_container.position = Vector2(
+		viewport_size.x / 2 - bg.size.x / 2,
+		viewport_size.y - 100
+	)
+	
+	bottom_score_container.hide()
 
 # -------------------- START SCREEN --------------------
 func create_start_screen():
@@ -85,7 +122,7 @@ func create_start_screen():
 	add_child(start_container)
 	
 	var bg = ColorRect.new()
-	bg.color = Color(0.031, 0.000, 0.267, 0.30)  # Lavender color like in the image
+	bg.color = Color(0.031, 0.000, 0.267, 0.30)  # Lavender color
 	bg.size = viewport_size
 	start_container.add_child(bg)
 	
@@ -97,8 +134,6 @@ func create_start_screen():
 	branding.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	branding.add_theme_font_size_override("font_size", 32)
 	branding.add_theme_color_override("font_color", Color(0.6, 0.4, 0.7))  # Purple
-
-	
 	start_container.add_child(branding)
 	
 	# Create a container to hold the title
@@ -109,7 +144,7 @@ func create_start_screen():
 	
 	# Create title label
 	var title = Label.new()
-	title.text = "Flappy Bird"
+	title.text = "Gjør deg klar"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 84)
 	title.add_theme_color_override("font_color", Color(0.2, 0.15, 0.3))
@@ -123,6 +158,7 @@ func create_start_screen():
 	var title_tween = create_tween().set_loops()
 	title_tween.tween_property(title, "scale", Vector2(1.05, 1.05), 0.8).set_ease(Tween.EASE_IN_OUT)
 	title_tween.tween_property(title, "scale", Vector2(1.0, 1.0), 0.8).set_ease(Tween.EASE_IN_OUT)
+	
 	# Tap to start with pulsing effect
 	var tap_label = Label.new()
 	tap_label.text = "Trykk for å starte"
@@ -140,7 +176,7 @@ func create_start_screen():
 	
 	# Instructions
 	var instructions = Label.new()
-	instructions.text = "Unngå rørene!"
+	instructions.text = "Unngå å treffe kablene!"
 	instructions.position = Vector2(0, viewport_size.y * 0.7)
 	instructions.size = Vector2(viewport_size.x, 60)
 	instructions.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -158,7 +194,6 @@ func create_game_over_screen():
 	game_over_container.hide()
 	add_child(game_over_container)
 	
-
 	var overlay = ColorRect.new()
 	overlay.color = Color(0.031, 0.000, 0.267, 0.30)  
 	overlay.size = viewport_size
@@ -179,7 +214,7 @@ func create_game_over_screen():
 	panel.name = "GameOverPanel"
 	panel.position = Vector2(viewport_size.x * 0.5 - 300, viewport_size.y * 0.5 - 280)
 	panel.size = Vector2(600, 560)
-	panel.clip_contents = true  # Allow mascot to overflow
+	panel.clip_contents = true
 	
 	# White rounded background
 	var style_box = StyleBoxFlat.new()
@@ -192,15 +227,15 @@ func create_game_over_screen():
 	
 	game_over_container.add_child(panel)
 	
-	# Mascot image - positioned at bottom-right, anchored to panel size
+	# Mascot image
 	var mascot = TextureRect.new()
 	mascot.name = "Mascot"
 	var mascot_size = 180
-	mascot.position = Vector2(panel.size.x - mascot_size, panel.size.y - 100 - mascot_size)  # Bottom-right with overflow
+	mascot.position = Vector2(panel.size.x - mascot_size, panel.size.y - 100 - mascot_size)
 	mascot.size = Vector2(mascot_size, mascot_size)
 	mascot.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	mascot.texture = load("res://assets/maskot3.png")
-	mascot.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Don't block mouse events
+	mascot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(mascot)
 	
 	# Score at top
@@ -211,7 +246,7 @@ func create_game_over_screen():
 	score_top.size = Vector2(600, 60)
 	score_top.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	score_top.add_theme_font_size_override("font_size", 42)
-	score_top.add_theme_color_override("font_color", Color(0.15, 0.1, 0.25))  # Dark purple/navy
+	score_top.add_theme_color_override("font_color", Color(0.15, 0.1, 0.25))
 	panel.add_child(score_top)
 	
 	# "Å nei!" text
@@ -233,14 +268,14 @@ func create_game_over_screen():
 	title.size = Vector2(600, 70)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 48)
-	title.add_theme_color_override("font_color", Color(0.15, 0.1, 0.25))  # Dark purple/navy
+	title.add_theme_color_override("font_color", Color(0.15, 0.1, 0.25))
 	panel.add_child(title)
 	
 	# Description text
 	var desc = RichTextLabel.new()
 	desc.name = "DescriptionLabel"
 	desc.bbcode_enabled = true
-	desc.text = "[center]Du fikk [b]27 poeng[/b] for å sikringsrøk,\nbara [b]3 poeng[/b] fra toppen![/center]"
+	desc.text = "[center]Du fikk [b]27 poeng[/b],\nbare [b]3 poeng[/b] fra toppen![/center]"
 	desc.position = Vector2(50, 220)
 	desc.size = Vector2(500, 80)
 	desc.add_theme_font_size_override("normal_font_size", 18)
@@ -315,12 +350,9 @@ func create_game_over_screen():
 	new_game_btn.add_theme_color_override("font_hover_color", Color(0.6, 0.4, 0.8))
 	new_game_btn.add_theme_color_override("font_pressed_color", Color(0.4, 0.2, 0.6))
 	
-	# Connect the button to load start scene
 	new_game_btn.pressed.connect(_on_new_game_pressed)
 	
 	panel.add_child(new_game_btn)
-
-
 
 # -------------------- PARTICLES --------------------
 func create_particles_container():
@@ -372,23 +404,9 @@ func spawn_death_particles(position: Vector2):
 func add_screen_shake(amount: float):
 	screen_shake_amount = min(screen_shake_amount + amount, max_shake)
 
-#func _process(delta: float):
-
-#	if screen_shake_amount > 0:
-#		screen_shake_amount = max(screen_shake_amount - shake_decay * delta, 0)
-#		offset = Vector2(
-#			randf_range(-screen_shake_amount, screen_shake_amount),
-#			randf_range(-screen_shake_amount, screen_shake_amount)
-#		)
-#	else:
-#		offset = Vector2.ZERO
-
 # -------------------- BUTTON CALLBACKS --------------------
 func _on_new_game_pressed():
-	# Change to start scene
 	var user_data = UserData.get_user_data()
-	
-	# Push to Firebase with user data and initial points
 	await UserData.push_score_to_firebase(highest_score)
 	get_tree().change_scene_to_file(start_scene_path)
 
@@ -396,47 +414,40 @@ func _on_new_game_pressed():
 func show_start_screen():
 	start_container.show()
 	start_container.modulate.a = 1.0
-	score_label.hide()
-	high_score_label.hide()
+	bottom_score_container.hide()
 	game_over_container.hide()
 
 func hide_start_screen():
-	# Animate out
 	var tween = create_tween()
 	tween.tween_property(start_container, "modulate:a", 0.0, 0.3)
 	tween.tween_callback(start_container.hide)
 	
-	score_label.show()
-	high_score_label.show()
-	
-	# Animate score in
-	score_label.modulate.a = 0
+	bottom_score_container.show()
+	bottom_score_container.modulate.a = 0
 	var score_tween = create_tween()
-	score_tween.tween_property(score_label, "modulate:a", 1.0, 0.5)
+	score_tween.tween_property(bottom_score_container, "modulate:a", 1.0, 0.5)
 
 func update_score(new_score: int, player_pos: Vector2):
 	if new_score > highest_score:
 		highest_score = new_score
-	score_label.text = str(new_score) + " poeng"
+	bottom_score_label.text = str(new_score) + " poeng"
 	
-	# Popup animation
-	var tween = create_tween()
-	tween.tween_property(score_label, "scale", Vector2(1.3, 1.3), 0.1)
-	tween.tween_property(score_label, "scale", Vector2(1.0, 1.0), 0.1)
-
+	# Animate bottom score
+	var bottom_tween = create_tween()
+	bottom_tween.tween_property(bottom_score_container, "scale", Vector2(1.1, 1.1), 0.1)
+	bottom_tween.tween_property(bottom_score_container, "scale", Vector2(1.0, 1.0), 0.1)
 	
 	# Spawn particles at player position
 	spawn_score_particles(player_pos)
 
 func update_high_score(new_high_score: int):
 	var l = UserData.get_highest_score()
-	high_score_label.text = "Best: " + str(int(l))
+	bottom_best_label.text = "Best " + str(int(l)) + " poeng"
 
 func show_game_over(final_score: int, best_score: int, player_pos: Vector2, is_new_record: bool):
-	# Death particles
+	bottom_score_container.hide()
 	spawn_death_particles(player_pos)
 	
-	# Show game over screen with delay
 	await get_tree().create_timer(0.5).timeout
 	
 	game_over_container.show()
@@ -450,14 +461,12 @@ func show_game_over(final_score: int, best_score: int, player_pos: Vector2, is_n
 	panel.scale = Vector2(0.8, 0.8)
 	panel.position.y += 50
 	
-	# Animate in
 	var tween = create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(game_over_container, "modulate:a", 1.0, 0.3)
 	tween.tween_property(panel, "scale", Vector2(1.0, 1.0), 0.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 	tween.tween_property(panel, "position:y", panel.position.y - 50, 0.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 	
-	# Update mascot image based on new record
 	var mascot = panel.get_node("Mascot") as TextureRect
 	if mascot:
 		if is_new_record:
@@ -465,7 +474,6 @@ func show_game_over(final_score: int, best_score: int, player_pos: Vector2, is_n
 		else:
 			mascot.texture = load("res://assets/maskot3.png")
 	
-	# Update score text at top (hide it for new record)
 	var score_top = panel.get_node("ScoreTop")
 	if score_top:
 		if is_new_record:
@@ -474,7 +482,6 @@ func show_game_over(final_score: int, best_score: int, player_pos: Vector2, is_n
 			score_top.show()
 			score_top.text = str(final_score) + " poeng"
 	
-	# Update title based on new record
 	var title = panel.get_node("MainTitle") as Label
 	if title:
 		if is_new_record:
@@ -482,7 +489,6 @@ func show_game_over(final_score: int, best_score: int, player_pos: Vector2, is_n
 		else:
 			title.text = "Kortslutning!"
 	
-	# Update "Å nei!" text (hide it for new record)
 	var oh_no = panel.get_node("OhNoLabel") as Label
 	if oh_no:
 		if is_new_record:
@@ -490,14 +496,13 @@ func show_game_over(final_score: int, best_score: int, player_pos: Vector2, is_n
 		else:
 			oh_no.show()
 	
-	# Update description with dynamic values
 	var points_from_top = abs(final_score - int(UserData.get_highest_score()))
 	var desc = panel.get_node("DescriptionLabel") as RichTextLabel
 	if desc:
 		if is_new_record:
 			desc.text = "[center]Du leder strømmen med hele\n[b]" + str(final_score) + " poeng[/b]![/center]"
 		else:
-			desc.text = "[center]Du fikk [b]" + str(final_score) + " poeng[/b] før sikringsrøk,\nbara [b]" + str(points_from_top) + " poeng[/b] fra toppen![/center]"
+			desc.text = "[center]Du fikk [b]" + str(final_score) + " poeng[/b],\nbare [b]" + str(points_from_top) + " poeng[/b] fra toppen![/center]"
 
 func get_restart_button() -> Button:
 	if game_over_container:
