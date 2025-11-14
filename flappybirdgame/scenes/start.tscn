@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://g1jdolrs4lwu"]
+[gd_scene load_steps=10 format=3 uid="uid://g1jdolrs4lwu"]
 
 [ext_resource type="Texture2D" uid="uid://xt6ohrb2my5m" path="res://assets/Logo.png" id="1_kdmts"]
 [ext_resource type="Texture2D" uid="uid://d00oamac86tvl" path="res://assets/maskot2.png" id="2_0auqf"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://c4s08sic53t1i" path="res://script/start_game.gd" id="5_0auqf"]
 [ext_resource type="StyleBox" uid="uid://dg845budiyvvc" path="res://shader/input.tres" id="5_4ge6i"]
 [ext_resource type="StyleBox" uid="uid://dxrayvnw7ardq" path="res://shader/start_button.tres" id="5_y16t7"]
+[ext_resource type="Texture2D" uid="uid://b5wnhf7ybytch" path="res://assets/background.png" id="10_pgjjs"]
 
 [node name="Start" type="Node2D"]
 
@@ -24,12 +25,23 @@ size_flags_horizontal = 6
 size_flags_vertical = 3
 
 [node name="ColorRect" type="ColorRect" parent="Register/Control"]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="bg" type="TextureRect" parent="Register/Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("10_pgjjs")
+stretch_mode = 1
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="Register/Control"]
 layout_mode = 1

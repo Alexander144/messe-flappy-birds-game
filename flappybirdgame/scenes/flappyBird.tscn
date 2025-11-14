@@ -338,7 +338,7 @@ scroll_speed = 50.0
 
 [node name="ParallaxLayer" type="ParallaxLayer" parent="ParallaxBackground"]
 motion_scale = Vector2(0, 0)
-motion_mirroring = Vector2(8081, 0)
+motion_mirroring = Vector2(7075, 0)
 
 [node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/ParallaxLayer"]
 texture = ExtResource("3_2n0tp")

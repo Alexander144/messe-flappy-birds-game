@@ -51,6 +51,7 @@ func create_score_ui():
 	score_label.add_theme_constant_override("shadow_offset_x", 4)
 	score_label.add_theme_constant_override("shadow_offset_y", 4)
 	score_label.add_theme_constant_override("shadow_outline_size", 8)
+	score_label.pivot_offset = score_label.get_size() / 2
 	
 	add_child(score_label)
 	score_label.hide()
@@ -83,9 +84,8 @@ func create_start_screen():
 	start_container.size = viewport_size
 	add_child(start_container)
 	
-	# Purple/lavender background
 	var bg = ColorRect.new()
-	bg.color = Color(0.75, 0.7, 0.82)  # Lavender color like in the image
+	bg.color = Color(0.031, 0.000, 0.267, 0.30)  # Lavender color like in the image
 	bg.size = viewport_size
 	start_container.add_child(bg)
 	
@@ -97,27 +97,32 @@ func create_start_screen():
 	branding.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	branding.add_theme_font_size_override("font_size", 32)
 	branding.add_theme_color_override("font_color", Color(0.6, 0.4, 0.7))  # Purple
+
+	
 	start_container.add_child(branding)
 	
-	# Title with glow effect
+	# Create a container to hold the title
+	var title_container = CenterContainer.new()
+	title_container.size = Vector2(viewport_size.x, 150)
+	title_container.position = Vector2(0, viewport_size.y * 0.25)
+	start_container.add_child(title_container)
+	
+	# Create title label
 	var title = Label.new()
 	title.text = "Flappy Bird"
-	title.position = Vector2(0, viewport_size.y * 0.25)
-	title.size = Vector2(viewport_size.x, 150)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 84)
-	title.add_theme_color_override("font_color", Color(0.2, 0.15, 0.3))  # Dark purple
+	title.add_theme_color_override("font_color", Color(0.2, 0.15, 0.3))
 	title.add_theme_color_override("font_shadow_color", Color(1, 1, 1, 0.3))
 	title.add_theme_constant_override("shadow_offset_x", 0)
 	title.add_theme_constant_override("shadow_offset_y", 0)
 	title.add_theme_constant_override("shadow_outline_size", 4)
-	start_container.add_child(title)
-	
-	# Animated title effect
+	title_container.add_child(title)
+
+	# Animate scale from center
 	var title_tween = create_tween().set_loops()
 	title_tween.tween_property(title, "scale", Vector2(1.05, 1.05), 0.8).set_ease(Tween.EASE_IN_OUT)
 	title_tween.tween_property(title, "scale", Vector2(1.0, 1.0), 0.8).set_ease(Tween.EASE_IN_OUT)
-	
 	# Tap to start with pulsing effect
 	var tap_label = Label.new()
 	tap_label.text = "Trykk for å starte"
@@ -153,9 +158,9 @@ func create_game_over_screen():
 	game_over_container.hide()
 	add_child(game_over_container)
 	
-	# Purple/lavender background overlay
+
 	var overlay = ColorRect.new()
-	overlay.color = Color(0.75, 0.7, 0.82, 0.95)  # Lavender like in image
+	overlay.color = Color(0.031, 0.000, 0.267, 0.30)  
 	overlay.size = viewport_size
 	game_over_container.add_child(overlay)
 	
@@ -418,6 +423,7 @@ func update_score(new_score: int, player_pos: Vector2):
 	var tween = create_tween()
 	tween.tween_property(score_label, "scale", Vector2(1.3, 1.3), 0.1)
 	tween.tween_property(score_label, "scale", Vector2(1.0, 1.0), 0.1)
+
 	
 	# Spawn particles at player position
 	spawn_score_particles(player_pos)
