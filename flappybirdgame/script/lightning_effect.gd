@@ -25,33 +25,33 @@ var x_offset: float = 0.0
 # Multiple bolt nodes
 var bolt_lines: Array = []
 
-func _ready():
-	width = bolt_width
-	default_color = bolt_color
+#func _ready():
+#	width = bolt_width
+#	default_color = bolt_color
 	
-	visible = false
+#	visible = false
 	
 	# Create additional Line2D nodes for multiple bolts
-	for i in range(num_bolts - 1):  # -1 because main Line2D is one bolt
-		var new_bolt = Line2D.new()
-		new_bolt.width = bolt_width
-		new_bolt.default_color = bolt_color
-		new_bolt.visible = false
-		add_child(new_bolt)
-		bolt_lines.append(new_bolt)
+#	for i in range(num_bolts - 1):  # -1 because main Line2D is one bolt
+#		var new_bolt = Line2D.new()
+#		new_bolt.width = bolt_width
+#		new_bolt.default_color = bolt_color
+#		new_bolt.visible = false
+#		add_child(new_bolt)
+#		bolt_lines.append(new_bolt)
 	
-	schedule_next_flash()
+#	schedule_next_flash()
 	
 	# Add glow shader
-	if ResourceLoader.exists("res://lightning_glow.gdshader"):
-		var shader_material = ShaderMaterial.new()
-		shader_material.shader = load("res://lightning_glow.gdshader")
-		material = shader_material
+#	if ResourceLoader.exists("res://lightning_glow.gdshader"):
+#		var shader_material = ShaderMaterial.new()
+#		shader_material.shader = load("res://lightning_glow.gdshader")
+#		material = shader_material
 		
-		# Apply to all bolt lines
-		for bolt in bolt_lines:
-			var bolt_material = shader_material.duplicate()
-			bolt.material = bolt_material
+#		# Apply to all bolt lines
+#		for bolt in bolt_lines:
+#			var bolt_material = shader_material.duplicate()
+#			bolt.material = bolt_material
 
 func setup_cable(start_pos: Vector2, end_pos: Vector2, is_top: bool = false):
 	cable_start = start_pos
